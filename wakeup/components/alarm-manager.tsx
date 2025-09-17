@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -35,7 +35,7 @@ export function AlarmManager() {
     if (savedAlarms) {
       try {
         const parsedAlarms = JSON.parse(savedAlarms)
-        setAlarms(parsedAlarms.map((a: any) => ({
+        setAlarms(parsedAlarms.map((a: Alarm & { createdAt: string }) => ({
           ...a,
           createdAt: new Date(a.createdAt)
         })))
@@ -48,7 +48,7 @@ export function AlarmManager() {
     if (savedRecordings) {
       try {
         const parsedRecordings = JSON.parse(savedRecordings)
-        setRecordings(parsedRecordings.map((r: any) => ({
+        setRecordings(parsedRecordings.map((r: VoiceRecording & { createdAt: string }) => ({
           ...r,
           createdAt: new Date(r.createdAt)
         })))
@@ -58,14 +58,28 @@ export function AlarmManager() {
     }
   }, [])
 
+  const playAlarmVoice = useCallback((alarm: Alarm) => {
+    if (alarm.selectedVoiceId) {
+      const recording = recordings.find(r => r.id === alarm.selectedVoiceId)
+      if (recording) {
+        const audio = new Audio(recording.url)
+        audio.play().catch(e => console.error('音声再生エラー:', e))
+      }
+    }
+    
+    // デフォルトのアラーム音も再生
+    const defaultAlarm = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Hzu2UIGWq86+WURTQGGIT/8teEPAoUX7Ps7KJNEQ1Hn+Hvw2EaAjqU3PLJeisELIHR8tuLOQgYaLjt4Z1REAxPpuHtr2EeAjaQ2fLNeSUGKHzJ8N2QQgkWYLHq6qZZFgpDmd7zyHEpBjJ+zPDajTkIGGvB7eCqUSgNQ5zj8D9/6g==')
+    defaultAlarm.play().catch(e => console.error('デフォルト音再生エラー:', e))
+  }, [recordings])
+
   // アラームをチェックする
   useEffect(() => {
     const checkAlarms = () => {
       const now = new Date()
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-      
-      const activeAlarm = alarms.find(alarm => 
-        alarm.isActive && 
+
+      const activeAlarm = alarms.find(alarm =>
+        alarm.isActive &&
         alarm.time === currentTime &&
         (!currentAlarm || currentAlarm.id !== alarm.id)
       )
@@ -78,21 +92,7 @@ export function AlarmManager() {
 
     const interval = setInterval(checkAlarms, 1000) // 1秒ごとにチェック
     return () => clearInterval(interval)
-  }, [alarms, currentAlarm])
-
-  const playAlarmVoice = (alarm: Alarm) => {
-    if (alarm.selectedVoiceId) {
-      const recording = recordings.find(r => r.id === alarm.selectedVoiceId)
-      if (recording) {
-        const audio = new Audio(recording.url)
-        audio.play().catch(e => console.error('音声再生エラー:', e))
-      }
-    }
-    
-    // デフォルトのアラーム音も再生
-    const defaultAlarm = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Hzu2UIGWq86+WURTQGGIT/8teEPAoUX7Ps7KJNEQ1Hn+Hvw2EaAjqU3PLJeisELIHR8tuLOQgYaLjt4Z1REAxPpuHtr2EeAjaQ2fLNeSUGKHzJ8N2QQgkWYLHq6qZZFgpDmd7zyHEpBjJ+zPDajTkIGGvB7eCqUSgNQ5zj8D9/6g==')
-    defaultAlarm.play().catch(e => console.error('デフォルト音再生エラー:', e))
-  }
+  }, [alarms, currentAlarm, playAlarmVoice])
 
   const addAlarm = () => {
     if (!newAlarmTime) {

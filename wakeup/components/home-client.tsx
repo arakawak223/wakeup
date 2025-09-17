@@ -1,26 +1,22 @@
 'use client'
 
-import { AuthProvider, useAuth } from "@/contexts/auth-context"
-import { EnhancedLoginForm } from "@/components/auth/enhanced-login-form"
-import { ProfileSetup } from "@/components/auth/profile-setup"
-import { FamilyDashboard } from "@/components/dashboard/family-dashboard"
+import { DeployButton } from "@/components/deploy-button"
 import { EnhancedAuthButton } from "@/components/enhanced-auth-button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
+import { ProfileSetup } from "@/components/auth/profile-setup"
+import { FamilyDashboard } from "@/components/dashboard/family-dashboard"
+import { EnhancedLoginForm } from "@/components/auth/enhanced-login-form"
+import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 
-function TestComponent() {
-  console.log('TestComponent rendering...')
-
+export function HomeClient() {
   const { user, profile, loading } = useAuth()
-  console.log('Auth state:', { user: !!user, profile: !!profile, loading })
 
   if (loading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-lg text-gray-600">認証情報を読み込み中...</p>
-        </div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        <p className="mt-4 text-gray-600">読み込み中...</p>
       </main>
     )
   }
@@ -33,6 +29,9 @@ function TestComponent() {
             <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
               <div className="flex gap-5 items-center font-semibold">
                 <Link href={"/"}>👨‍👩‍👧‍👦 家族の音声メッセージ</Link>
+                <div className="flex items-center gap-2">
+                  <DeployButton />
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <EnhancedAuthButton />
@@ -72,7 +71,8 @@ function TestComponent() {
     )
   }
 
-  if (!profile?.display_name) {
+  // ユーザーのプロフィールを確認
+  if (!profile || !profile.display_name) {
     return (
       <main className="min-h-screen flex flex-col items-center">
         <div className="flex-1 w-full flex flex-col items-center">
@@ -146,15 +146,5 @@ function TestComponent() {
         </footer>
       </div>
     </main>
-  )
-}
-
-export default function Home() {
-  console.log('Page rendering with AuthProvider...')
-
-  return (
-    <AuthProvider>
-      <TestComponent />
-    </AuthProvider>
   )
 }

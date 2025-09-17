@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { AccessibilityProvider, AccessibilityControls } from "@/components/accessibility/accessibility-provider";
+import { AuthProvider } from "@/contexts/auth-context";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -25,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ja" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -33,7 +35,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AuthProvider>
+            <AccessibilityProvider>
+              {children}
+              <AccessibilityControls />
+            </AccessibilityProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
