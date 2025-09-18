@@ -13,6 +13,9 @@ import { MessageRequest } from '@/components/messages/message-request'
 import { VoiceMessageComposer } from '@/components/messages/voice-message-composer'
 import { VoiceMessageList } from '@/components/voice-message-list'
 import { SentHistory } from '@/components/messages/sent-history'
+import { VoiceMessageReceiver } from '@/components/messages/voice-message-receiver'
+import { MessageDetailReceiver } from '@/components/messages/message-detail-receiver'
+import { InboxNotifications } from '@/components/messages/inbox-notifications'
 import { NotificationSettingsComponent } from '@/components/notifications/notification-settings'
 import { DevControls } from '@/components/dev-mode/dev-controls'
 import { NotificationCenter } from '@/components/notifications/notification-center'
@@ -111,6 +114,12 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <InboxNotifications
+              onMessageClick={(messageId) => {
+                // メッセージ詳細表示の実装
+                console.log('メッセージクリック:', messageId)
+              }}
+            />
             <OnlineStatus
               userId={user.id}
               displayName={profile.display_name || 'ユーザー'}
@@ -248,18 +257,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
         )}
 
         {activeTab === 'received' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>📥 受信したメッセージ</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <VoiceMessageList
-                user={user}
-                type="received"
-                refreshTrigger={messageRefreshTrigger}
-              />
-            </CardContent>
-          </Card>
+          <VoiceMessageReceiver />
         )}
 
         {activeTab === 'advanced' && (

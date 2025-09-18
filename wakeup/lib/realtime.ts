@@ -405,3 +405,71 @@ export function useRealtimeNotifications(userId: string) {
 
 // React Hookのインポート
 import { useState, useEffect } from 'react'
+
+// RealtimeManagerクラス - 個別のリアルタイム管理
+export class RealtimeManager {
+  private supabase = createClient()
+  private userId: string
+  private channels: Map<string, RealtimeChannel> = new Map()
+
+  constructor(userId: string) {
+    this.userId = userId
+  }
+
+  // 音声メッセージのサブスクリプション
+  subscribeToVoiceMessages(options: {
+    onNewMessage?: (message: VoiceMessage) => void
+    onMessageUpdate?: (messageId: string, updates: Partial<VoiceMessage>) => void
+  }) {
+    const channelName = `voice_messages_${this.userId}_${Date.now()}`
+
+    const channel = this.supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'voice_messages',
+          filter: `receiver_id=eq.${this.userId}`
+        },
+        (payload) => {
+          const newMessage = payload.new as VoiceMessage
+          options.onNewMessage?.(newMessage)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'voice_messages',
+          filter: `receiver_id=eq.${this.userId}`
+        },
+        (payload) => {
+          const updatedMessage = payload.new as VoiceMessage
+          const oldMessage = payload.old as VoiceMessage
+
+          // 変更された項目を特定
+          const updates: Partial<VoiceMessage> = {}
+          if (updatedMessage.is_read !== oldMessage.is_read) {
+            updates.is_read = updatedMessage.is_read
+          }
+
+          options.onMessageUpdate?.(updatedMessage.id, updates)
+        }
+      )
+      .subscribe()
+
+    this.channels.set(channelName, channel)
+    return channelName
+  }
+
+  // 購読解除
+  unsubscribe() {
+    this.channels.forEach((channel) => {
+      this.supabase.removeChannel(channel)
+    })
+    this.channels.clear()
+  }
+}

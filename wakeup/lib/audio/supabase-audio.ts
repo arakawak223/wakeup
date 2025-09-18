@@ -200,13 +200,12 @@ export class SupabaseAudioManager {
   /**
    * 音声メッセージを既読にする
    */
-  async markMessageAsRead(messageId: string, userId: string): Promise<void> {
+  async markMessageAsRead(messageId: string): Promise<void> {
     try {
       const { error } = await this.supabase
         .from('voice_messages')
         .update({ is_read: true })
         .eq('id', messageId)
-        .eq('receiver_id', userId)
 
       if (error) {
         throw new Error(`既読更新エラー: ${error.message}`)
