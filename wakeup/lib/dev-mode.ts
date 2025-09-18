@@ -8,6 +8,13 @@ export const isDevMode = () => {
          typeof window !== 'undefined' && window.location.hostname === 'localhost'
 }
 
+// 開発用テストアカウント情報
+export const getDevTestAccounts = () => [
+  { email: 'test1@example.com', password: 'testpass123' },
+  { email: 'test2@example.com', password: 'testpass123' },
+  { email: 'family@example.com', password: 'testpass123' }
+]
+
 // ダミー家族メンバーのデータ（フロントエンドでモック）
 export const getDummyFamilyMembers = (): Profile[] => [
   {

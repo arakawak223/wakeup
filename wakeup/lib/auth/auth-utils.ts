@@ -28,33 +28,37 @@ export class AuthManager {
    */
   async getCurrentUserWithProfile(): Promise<AuthResult> {
     try {
-      const { data: { user }, error: userError } = await this.supabase.auth.getUser()
+      console.log('認証状態確認開始...')
 
-      if (userError) {
-        return { success: false, error: userError.message }
+      // 迅速にセッションを確認
+      const { data: { session } } = await this.supabase.auth.getSession()
+
+      if (!session?.user) {
+        console.log('セッションなし - 未ログイン状態')
+        return { success: true, user: null, profile: undefined }
       }
 
-      if (!user) {
-        return { success: false, error: 'ユーザーが見つかりません' }
+      const user = session.user
+      console.log('ユーザー確認:', user.id)
+
+      // プロフィール情報を短時間で取得試行
+      try {
+        const { data: profile } = await this.supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        console.log('プロフィール取得完了')
+        return { success: true, user, profile: profile || undefined }
+      } catch (profileError) {
+        console.log('プロフィール取得をスキップ')
+        // プロフィール取得失敗でもユーザー情報は返す
+        return { success: true, user, profile: undefined }
       }
-
-      // プロフィール情報を取得
-      const { data: profile, error: profileError } = await this.supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError && profileError.code !== 'PGRST116') { // PGRST116は行が見つからない場合
-        return { success: false, user, error: profileError.message }
-      }
-
-      return { success: true, user, profile: profile || undefined }
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '不明なエラーが発生しました'
-      }
+      console.log('認証エラーですが継続:', error)
+      return { success: true, user: null, profile: undefined }
     }
   }
 

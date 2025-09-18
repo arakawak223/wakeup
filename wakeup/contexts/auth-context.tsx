@@ -43,35 +43,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 初期認証状態の取得
   useEffect(() => {
+    let isMounted = true
+
     const getInitialAuth = async () => {
+      console.log('認証状態取得開始...')
+
       try {
-        console.log('認証状態取得開始...')
-
-        // タイムアウト付きで認証状態を取得
-        const authPromise = authManager.getCurrentUserWithProfile()
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('認証タイムアウト')), 10000)
-        )
-
-        const result = await Promise.race([authPromise, timeoutPromise]) as any
+        const result = await authManager.getCurrentUserWithProfile()
         console.log('認証結果:', result)
 
-        if (result.success) {
-          setUser(result.user || null)
-          setProfile(result.profile || null)
-        } else {
-          console.log('認証失敗:', result.error)
+        if (isMounted) {
+          if (result && result.success) {
+            setUser(result.user || null)
+            setProfile(result.profile || null)
+            console.log('認証成功')
+          } else {
+            setUser(null)
+            setProfile(null)
+            console.log('未ログイン状態')
+          }
         }
       } catch (error) {
-        console.error('初期認証状態取得エラー:', error)
-        // エラーが発生してもloadingをfalseにして、ログイン画面を表示
+        console.error('認証エラー:', error)
+        if (isMounted) {
+          setUser(null)
+          setProfile(null)
+        }
       } finally {
-        console.log('認証状態取得完了、loading=false設定')
-        setLoading(false)
+        if (isMounted) {
+          console.log('loading=false設定')
+          setLoading(false)
+        }
       }
     }
 
+    // 最大3秒後には必ずloadingを終了
+    const timeout = setTimeout(() => {
+      if (isMounted) {
+        console.log('タイムアウト - アプリを続行します')
+        setLoading(false)
+      }
+    }, 3000)
+
     getInitialAuth()
+
+    return () => {
+      isMounted = false
+      clearTimeout(timeout)
+    }
   }, [])
 
   // 認証状態の変更を監視

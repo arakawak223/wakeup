@@ -8,11 +8,13 @@ import { FamilyInvite } from '@/components/family/family-invite'
 import { FamilyList } from '@/components/family/family-list'
 import { InvitationManager } from '@/components/family/invitation-manager'
 import { FamilyVoiceChat } from '@/components/family/family-voice-chat'
+import { IntegratedVoiceSender } from '@/components/messages/integrated-voice-sender'
 import { MessageRequest } from '@/components/messages/message-request'
 import { VoiceMessageSender } from '@/components/messages/voice-message-sender'
 import { VoiceMessageComposer } from '@/components/messages/voice-message-composer'
 import { VoiceRecorderSupabase } from '@/components/voice-recorder-supabase'
 import { VoiceMessageList } from '@/components/voice-message-list'
+import { SentHistory } from '@/components/messages/sent-history'
 import { NotificationSettingsComponent } from '@/components/notifications/notification-settings'
 import { DevControls } from '@/components/dev-mode/dev-controls'
 import { NotificationCenter } from '@/components/notifications/notification-center'
@@ -20,6 +22,7 @@ import { ToastNotifications } from '@/components/notifications/toast-notificatio
 import { OnlineStatus } from '@/components/presence/online-status'
 import { getMockFamilyMembers } from '@/lib/dev-mode'
 import { createClient } from '@/lib/supabase/client'
+import { realtimeService } from '@/lib/realtime'
 import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
@@ -36,6 +39,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('chat')
   const [familyMembers, setFamilyMembers] = useState<Profile[]>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState(0)
   const supabase = createClient()
 
   // 承認済みの家族メンバーを取得
@@ -77,6 +81,24 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
   useEffect(() => {
     loadFamilyMembers()
   }, [loadFamilyMembers])
+
+  // リアルタイム通知を設定
+  useEffect(() => {
+    // 音声メッセージの受信を監視
+    const voiceChannelId = realtimeService.subscribeToVoiceMessages(user.id, () => {
+      setMessageRefreshTrigger(prev => prev + 1)
+    })
+
+    // メッセージリクエストの受信を監視
+    const requestChannelId = realtimeService.subscribeToMessageRequests(user.id, () => {
+      setRefreshTrigger(prev => prev + 1)
+    })
+
+    return () => {
+      realtimeService.unsubscribe(voiceChannelId)
+      realtimeService.unsubscribe(requestChannelId)
+    }
+  }, [user.id])
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -152,6 +174,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
           variant={activeTab === 'received' ? 'default' : 'ghost'}
           onClick={() => setActiveTab('received')}
           className="text-lg"
+          data-tab="received"
         >
           📥 受信済み
         </Button>
@@ -217,51 +240,13 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
         )}
 
         {activeTab === 'send' && (
-          <div className="space-y-4">
-            {familyMembers.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400 mb-4">
-                    音声メッセージを送信するには、まず家族・友人を追加してください
-                  </p>
-                  <Button onClick={() => setActiveTab('family')}>
-                    👨‍👩‍👧‍👦 家族管理へ
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>音声メッセージを録音</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <VoiceRecorderSupabase
-                      user={user}
-                      mode="message"
-                      onRecordingComplete={(messageId) => {
-                        console.log('音声メッセージが保存されました:', messageId)
-                        // 必要に応じて画面遷移や更新処理
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-
-                {familyMembers.map((member) => (
-                  <VoiceMessageSender
-                    key={member.id}
-                    userId={user.id}
-                    receiverId={member.id}
-                    receiver={member}
-                    onMessageSent={() => {
-                    // メッセージ送信後、送信済みタブに移動
-                    setActiveTab('sent')
-                  }}
-                />
-              ))}
-              </>
-            )}
-          </div>
+          <IntegratedVoiceSender
+            onMessageSent={(messageId) => {
+              console.log('音声メッセージが送信されました:', messageId)
+              // 送信履歴やメッセージ一覧を更新
+              loadFamilyMembers()
+            }}
+          />
         )}
 
         {activeTab === 'received' && (
@@ -270,7 +255,11 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
               <CardTitle>📥 受信したメッセージ</CardTitle>
             </CardHeader>
             <CardContent>
-              <VoiceMessageList user={user} type="received" />
+              <VoiceMessageList
+                user={user}
+                type="received"
+                refreshTrigger={messageRefreshTrigger}
+              />
             </CardContent>
           </Card>
         )}
@@ -321,14 +310,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
         )}
 
         {activeTab === 'sent' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>📤 送信したメッセージ</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <VoiceMessageList user={user} type="sent" />
-            </CardContent>
-          </Card>
+          <SentHistory user={user} />
         )}
 
         {activeTab === 'settings' && (

@@ -213,11 +213,78 @@ class RealtimeNotificationService {
   private deliverNotification(notification: NotificationData) {
     // ブラウザの通知API
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title, {
+      const browserNotification = new Notification(notification.title, {
         body: notification.message,
         icon: '/favicon.ico',
-        badge: '/favicon.ico'
+        badge: '/favicon.ico',
+        tag: notification.type, // 同じタイプの通知を重複させない
+        requireInteraction: notification.type === 'new_voice_message', // 音声メッセージは要インタラクション
+        silent: false
       })
+
+      // クリック時の処理
+      browserNotification.onclick = () => {
+        window.focus()
+        browserNotification.close()
+
+        // タイプに応じてページ内の適切なセクションにフォーカス
+        if (notification.type === 'new_voice_message') {
+          // 受信メッセージタブに切り替える
+          const receivedTab = document.querySelector('[data-tab="received"]') as HTMLButtonElement
+          receivedTab?.click()
+        }
+      }
+
+      // 自動的に5秒後に閉じる（音声メッセージ以外）
+      if (notification.type !== 'new_voice_message') {
+        setTimeout(() => {
+          browserNotification.close()
+        }, 5000)
+      }
+    }
+
+    // サウンド通知を再生
+    this.playSoundNotification(notification.type)
+  }
+
+  // サウンド通知の再生
+  private playSoundNotification(type: string) {
+    try {
+      // 簡単なビープ音を生成
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+
+      let frequency: number
+      switch (type) {
+        case 'new_voice_message':
+          frequency = 800 // 高めの音
+          break
+        case 'new_message_request':
+          frequency = 600 // 中程度の音
+          break
+        case 'request_accepted':
+          frequency = 1000 // さらに高い音
+          break
+        default:
+          frequency = 400 // 低めの音
+      }
+
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime)
+      oscillator.type = 'sine'
+
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
+
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.5)
+    } catch (error) {
+      // サウンド再生に失敗してもエラーを無視
+      console.warn('サウンド通知の再生に失敗:', error)
     }
   }
 

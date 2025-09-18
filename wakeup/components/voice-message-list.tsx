@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { supabaseAudioManager } from '@/lib/audio/supabase-audio'
+import { SupabaseAudioManager } from '@/lib/audio/supabase-audio'
 import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
@@ -18,35 +18,46 @@ interface VoiceMessageListProps {
   user: User
   type?: 'sent' | 'received' | 'all'
   onMessageSelect?: (message: VoiceMessage) => void
+  refreshTrigger?: number
+  showRefreshButton?: boolean
 }
 
 export function VoiceMessageList({
   user,
   type = 'all',
-  onMessageSelect
+  onMessageSelect,
+  refreshTrigger = 0,
+  showRefreshButton = true
 }: VoiceMessageListProps) {
   const [messages, setMessages] = useState<VoiceMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null)
   const [playProgress, setPlayProgress] = useState<{ [key: string]: number }>({})
+  const [error, setError] = useState<string | null>(null)
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+
+  const audioManager = new SupabaseAudioManager()
 
   // メッセージ一覧を読み込み
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       setLoading(true)
-      const data = await supabaseAudioManager.getUserVoiceMessages(user.id, type)
+      setError(null)
+      const data = await audioManager.getUserVoiceMessages(user.id, type)
       setMessages(data)
+      setLastRefresh(new Date())
     } catch (error) {
       console.error('メッセージ読み込みエラー:', error)
+      setError('メッセージの読み込みに失敗しました')
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id, type, audioManager])
 
   useEffect(() => {
     loadMessages()
-  }, [user.id, type])
+  }, [loadMessages, refreshTrigger])
 
   // 音声再生
   const playAudio = async (message: VoiceMessage) => {
@@ -102,7 +113,7 @@ export function VoiceMessageList({
 
       // 受信したメッセージの場合は既読にする
       if (message.receiver_id === user.id && !message.is_read) {
-        await supabaseAudioManager.markMessageAsRead(message.id, user.id)
+        await audioManager.markMessageAsRead(message.id, user.id)
         // メッセージリストを更新
         setMessages(prev => prev.map(msg =>
           msg.id === message.id ? { ...msg, is_read: true } : msg
@@ -133,11 +144,30 @@ export function VoiceMessageList({
     if (!confirm('この音声メッセージを削除しますか？')) return
 
     try {
-      await supabaseAudioManager.deleteVoiceMessage(message.id, user.id)
+      await audioManager.deleteVoiceMessage(message.id, user.id)
       setMessages(prev => prev.filter(msg => msg.id !== message.id))
     } catch (error) {
       console.error('メッセージ削除エラー:', error)
       alert('メッセージの削除に失敗しました。')
+    }
+  }
+
+  // 全メッセージを既読にする
+  const markAllAsRead = async () => {
+    const unreadMessages = messages.filter(msg =>
+      msg.receiver_id === user.id && !msg.is_read
+    )
+
+    if (unreadMessages.length === 0) return
+
+    try {
+      await Promise.all(
+        unreadMessages.map(msg => audioManager.markMessageAsRead(msg.id, user.id))
+      )
+      setMessages(prev => prev.map(msg => ({ ...msg, is_read: true })))
+    } catch (error) {
+      console.error('全既読エラー:', error)
+      alert('一括既読の処理に失敗しました。')
     }
   }
 
@@ -175,7 +205,25 @@ export function VoiceMessageList({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center">読み込み中...</div>
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600">メッセージを読み込み中...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center space-y-4">
+            <div className="text-red-600">⚠️ {error}</div>
+            <Button onClick={loadMessages} variant="outline">
+              再読み込み
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
@@ -185,10 +233,18 @@ export function VoiceMessageList({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-gray-500">
-            {type === 'sent' ? '送信した音声メッセージはありません' :
-             type === 'received' ? '受信した音声メッセージはありません' :
-             '音声メッセージはありません'}
+          <div className="text-center space-y-4">
+            <div className="text-6xl">📭</div>
+            <div className="text-gray-500">
+              {type === 'sent' ? '送信した音声メッセージはありません' :
+               type === 'received' ? '受信した音声メッセージはありません' :
+               '音声メッセージはありません'}
+            </div>
+            {type === 'received' && (
+              <p className="text-sm text-gray-400">
+                家族や友人からのメッセージがここに表示されます
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -197,6 +253,46 @@ export function VoiceMessageList({
 
   return (
     <div className="space-y-4">
+      {showRefreshButton && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-lg">
+              {type === 'sent' ? '📤 送信済みメッセージ' :
+               type === 'received' ? '📥 受信メッセージ' :
+               '💬 全メッセージ'}
+            </h3>
+            <Badge variant="outline" className="text-sm">
+              {messages.length}件
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">
+              最終更新: {lastRefresh.toLocaleTimeString('ja-JP')}
+            </span>
+            {type === 'received' && messages.some(msg => msg.receiver_id === user.id && !msg.is_read) && (
+              <Button
+                onClick={markAllAsRead}
+                variant="outline"
+                size="sm"
+              >
+                ✅ 全て既読
+              </Button>
+            )}
+            <Button
+              onClick={() => loadMessages()}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="animate-spin">⟳</div>
+              ) : (
+                '🔄'
+              )} 更新
+            </Button>
+          </div>
+        </div>
+      )}
       {messages.map((message) => {
         const isPlaying = playingId === message.id
         const progress = playProgress[message.id] || 0
@@ -247,9 +343,17 @@ export function VoiceMessageList({
                   </div>
 
                   {/* 再生進行状況 */}
-                  {isPlaying && (
+                  {(isPlaying || progress > 0) && (
                     <div className="mb-3">
                       <Progress value={progress} className="h-2" />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>
+                          {formatDuration(Math.floor((progress / 100) * (message.duration || 0)))}
+                        </span>
+                        <span>
+                          {formatDuration(message.duration || 0)}
+                        </span>
+                      </div>
                     </div>
                   )}
 
@@ -270,7 +374,7 @@ export function VoiceMessageList({
                 </div>
 
                 {/* 操作ボタン */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 min-w-[100px]">
                   <Button
                     size="sm"
                     variant={isPlaying ? "destructive" : "default"}
@@ -282,8 +386,15 @@ export function VoiceMessageList({
                         playAudio(message)
                       }
                     }}
+                    className="w-full"
                   >
-                    {isPlaying ? '⏹️ 停止' : '▶️ 再生'}
+                    {isPlaying ? (
+                      <>
+                        <span className="animate-pulse">⏸️</span> 停止
+                      </>
+                    ) : (
+                      <>▶️ 再生</>
+                    )}
                   </Button>
 
                   {isSent && (
@@ -294,8 +405,26 @@ export function VoiceMessageList({
                         e.stopPropagation()
                         deleteMessage(message)
                       }}
+                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       🗑️ 削除
+                    </Button>
+                  )}
+
+                  {!isSent && !message.is_read && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        audioManager.markMessageAsRead(message.id, user.id)
+                        setMessages(prev => prev.map(msg =>
+                          msg.id === message.id ? { ...msg, is_read: true } : msg
+                        ))
+                      }}
+                      className="w-full text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      ✅ 既読
                     </Button>
                   )}
                 </div>
