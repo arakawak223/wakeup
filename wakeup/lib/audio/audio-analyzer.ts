@@ -244,4 +244,36 @@ export class AudioAnalyzer {
 
     return (volumeScore * 0.3 + noiseScore * 0.3 + clarityScore * 0.4)
   }
+
+  /**
+   * 音声ファイルを分析してメトリクスを返す
+   */
+  async analyzeAudio(audioBlob: Blob): Promise<{ qualityScore: number }> {
+    try {
+      // 簡易的な品質分析
+      // 実際の実装では音声データの解析を行う
+      const audioSize = audioBlob.size
+      const duration = audioSize / (44100 * 2) // 概算時間
+
+      // ファイルサイズと推定時間から品質スコアを計算
+      let qualityScore = 75 // ベーススコア
+
+      // ファイルサイズが適切な範囲にある場合はスコアを上げる
+      if (audioSize > 10000 && audioSize < 1000000) {
+        qualityScore += 10
+      }
+
+      // 時間が適切な範囲にある場合はスコアを上げる
+      if (duration > 1 && duration < 60) {
+        qualityScore += 10
+      }
+
+      return {
+        qualityScore: Math.min(100, Math.max(0, qualityScore))
+      }
+    } catch (error) {
+      console.warn('音声分析エラー:', error)
+      return { qualityScore: 75 }
+    }
+  }
 }

@@ -9,6 +9,7 @@ export interface Database {
           email: string
           display_name: string | null
           avatar_url: string | null
+          role: string | null
           created_at: string
           updated_at: string
         }
@@ -17,6 +18,7 @@ export interface Database {
           email: string
           display_name?: string | null
           avatar_url?: string | null
+          role?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -25,6 +27,7 @@ export interface Database {
           email?: string
           display_name?: string | null
           avatar_url?: string | null
+          role?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -77,6 +80,11 @@ export interface Database {
           emotion_confidence: number | null
           arousal_level: number | null
           valence_level: number | null
+          emotion_primary: string | null
+          emotion_arousal: number | null
+          quality_score: number | null
+          transcription: string | null
+          transcription_confidence: number | null
           created_at: string
           updated_at: string
         }
@@ -98,6 +106,11 @@ export interface Database {
           emotion_confidence?: number | null
           arousal_level?: number | null
           valence_level?: number | null
+          emotion_primary?: string | null
+          emotion_arousal?: number | null
+          quality_score?: number | null
+          transcription?: string | null
+          transcription_confidence?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -119,6 +132,11 @@ export interface Database {
           emotion_confidence?: number | null
           arousal_level?: number | null
           valence_level?: number | null
+          emotion_primary?: string | null
+          emotion_arousal?: number | null
+          quality_score?: number | null
+          transcription?: string | null
+          transcription_confidence?: number | null
           created_at?: string
           updated_at?: string
         }

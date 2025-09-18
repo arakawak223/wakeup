@@ -9,9 +9,11 @@ type VoiceMessage = Database['public']['Tables']['voice_messages']['Row']
 type VoiceMessageInsert = Database['public']['Tables']['voice_messages']['Insert']
 
 export interface AudioUploadResult {
-  audioUrl: string
-  publicUrl: string
-  messageId: string
+  success: boolean
+  audioUrl?: string
+  publicUrl?: string
+  messageId?: string
+  error?: string
 }
 
 export interface AudioMetadata {
@@ -123,6 +125,7 @@ export class SupabaseAudioManager {
       category?: string
       duration?: number
       requestId?: string
+      messageType?: string
     },
     fileName?: string,
     metadata?: AudioMetadata
@@ -142,13 +145,17 @@ export class SupabaseAudioManager {
       })
 
       return {
+        success: true,
         audioUrl,
         publicUrl,
         messageId: savedMessage.id
       }
     } catch (error) {
       console.error('音声メッセージの保存に失敗:', error)
-      throw error
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '音声メッセージの保存に失敗しました'
+      }
     }
   }
 
