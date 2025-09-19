@@ -64,7 +64,7 @@ const MOCK_DATA_KEY = 'wakeup_dev_mock_data'
 
 interface MockData {
   dummyProfiles: Profile[]
-  dummyMessages: any[]
+  dummyMessages: unknown[]
   userId: string
 }
 
@@ -147,7 +147,7 @@ export function getMockFamilyMembers(userId: string): Profile[] {
 }
 
 // モックメッセージを取得
-export function getMockMessages(userId: string): any[] {
+export function getMockMessages(userId: string): unknown[] {
   if (!isDevMode()) return []
 
   const mockData = getMockData(userId)

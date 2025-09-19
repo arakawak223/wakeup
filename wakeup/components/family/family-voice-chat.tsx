@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -30,17 +30,7 @@ export function FamilyVoiceChat({ userId }: FamilyVoiceChatProps) {
   const [newMessageTitle, setNewMessageTitle] = useState('')
   const supabase = createClient()
 
-  useEffect(() => {
-    loadFamilyMembers()
-  }, [userId])
-
-  useEffect(() => {
-    if (selectedMember) {
-      loadMessages(selectedMember.id)
-    }
-  }, [selectedMember, userId])
-
-  const loadFamilyMembers = async () => {
+  const loadFamilyMembers = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -85,9 +75,9 @@ export function FamilyVoiceChat({ userId }: FamilyVoiceChatProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, supabase])
 
-  const loadMessages = async (otherUserId: string) => {
+  const loadMessages = useCallback(async (otherUserId: string) => {
     try {
       const { data, error } = await supabase
         .from('voice_messages')
@@ -109,7 +99,17 @@ export function FamilyVoiceChat({ userId }: FamilyVoiceChatProps) {
         console.error('エラーメッセージ:', error.message)
       }
     }
-  }
+  }, [userId, supabase])
+
+  useEffect(() => {
+    loadFamilyMembers()
+  }, [loadFamilyMembers])
+
+  useEffect(() => {
+    if (selectedMember) {
+      loadMessages(selectedMember.id)
+    }
+  }, [selectedMember, loadMessages])
 
   const handleVoiceRecorded = async (audioBlob: Blob) => {
     if (!selectedMember) return

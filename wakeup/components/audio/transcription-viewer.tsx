@@ -105,7 +105,7 @@ export function TranscriptionViewer({
     }
   }
 
-  const handleOptionChange = (key: keyof TranscriptionOptions, value: any) => {
+  const handleOptionChange = (key: keyof TranscriptionOptions, value: unknown) => {
     setOptions(prev => ({
       ...prev,
       [key]: value

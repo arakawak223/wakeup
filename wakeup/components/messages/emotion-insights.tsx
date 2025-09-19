@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 
-type VoiceMessage = Database['public']['Tables']['voice_messages']['Row']
 
 interface EmotionInsightsProps {
   userId: string
@@ -31,11 +30,7 @@ export function EmotionInsights({ userId, timeRange = '7d' }: EmotionInsightsPro
   const [view, setView] = useState<'overview' | 'trends' | 'details'>('overview')
   const supabase = createClient()
 
-  useEffect(() => {
-    loadEmotionStats()
-  }, [userId, timeRange])
-
-  const loadEmotionStats = async () => {
+  const loadEmotionStats = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -72,7 +67,7 @@ export function EmotionInsights({ userId, timeRange = '7d' }: EmotionInsightsPro
       let totalValence = 0
       const moodTrend: Array<{ date: string; dominantEmotion: string; confidence: number }> = []
 
-      messages.forEach(message => {
+      messages.forEach((message: Database['public']['Tables']['voice_messages']['Row']) => {
         if (message.dominant_emotion) {
           emotionBreakdown[message.dominant_emotion] =
             (emotionBreakdown[message.dominant_emotion] || 0) + 1
@@ -122,7 +117,11 @@ export function EmotionInsights({ userId, timeRange = '7d' }: EmotionInsightsPro
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, timeRange, supabase])
+
+  useEffect(() => {
+    loadEmotionStats()
+  }, [loadEmotionStats])
 
   const getEmotionEmoji = (emotion: string): string => {
     const emojiMap: Record<string, string> = {
@@ -206,7 +205,7 @@ export function EmotionInsights({ userId, timeRange = '7d' }: EmotionInsightsPro
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={view} onValueChange={(value) => setView(value as any)}>
+          <Tabs value={view} onValueChange={(value) => setView(value as 'overview' | 'trends' | 'details')}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="overview">概要</TabsTrigger>
               <TabsTrigger value="trends">感情傾向</TabsTrigger>
@@ -248,7 +247,7 @@ export function EmotionInsights({ userId, timeRange = '7d' }: EmotionInsightsPro
               <div className="space-y-4">
                 <h3 className="font-semibold">よく検出される感情</h3>
                 <div className="space-y-3">
-                  {stats.topEmotions.map((item, index) => (
+                  {stats.topEmotions.map((item) => (
                     <div key={item.emotion} className="flex items-center gap-3">
                       <div className="flex items-center gap-2 min-w-[120px]">
                         <span className="text-lg">{getEmotionEmoji(item.emotion)}</span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -25,11 +25,7 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
   const [searching, setSearching] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    loadFamilyConnections()
-  }, [userId])
-
-  const loadFamilyConnections = async () => {
+  const loadFamilyConnections = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -73,10 +69,11 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
             email: 'current@user.com',
             display_name: 'あなた',
             avatar_url: null,
+            role: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
-          user2: member
+          user2: { ...member, role: member.role || null }
         }))
 
         allConnections = [...allConnections, ...mockConnections]
@@ -106,10 +103,11 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
             email: 'current@user.com',
             display_name: 'あなた',
             avatar_url: null,
+            role: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
-          user2: member
+          user2: { ...member, role: member.role || null }
         }))
 
         setConnections(mockConnections)
@@ -117,7 +115,11 @@ export function FamilyManager({ userId }: FamilyManagerProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId, supabase])
+
+  useEffect(() => {
+    loadFamilyConnections()
+  }, [loadFamilyConnections])
 
   const addFamilyMember = async () => {
     if (!searchEmail.trim()) return

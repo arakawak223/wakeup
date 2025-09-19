@@ -113,7 +113,7 @@ export class EmotionAnalyzer {
     }
 
     if (typeof window !== 'undefined') {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      this.audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
     }
   }
 
@@ -435,7 +435,7 @@ export class EmotionAnalyzer {
   /**
    * 覚醒度と感情価の計算
    */
-  private computeArousalValence(emotions: EmotionAnalysisResult['emotions'], features: AudioFeatures) {
+  private computeArousalValence(emotions: EmotionAnalysisResult['emotions']) {
     // 覚醒度（Arousal）: 高い興奮状態 vs 落ち着いた状態
     const arousal =
       emotions.anger * 0.8 +
@@ -663,7 +663,7 @@ export class EmotionAnalyzer {
     return mfcc
   }
 
-  private applyMelFilterBank(magnitude: number[], sampleRate: number): number[] {
+  private applyMelFilterBank(magnitude: number[]): number[] {
     // 簡易メルフィルターバンク（実際の実装では詳細な設計が必要）
     const numFilters = 26
     const filtered: number[] = []

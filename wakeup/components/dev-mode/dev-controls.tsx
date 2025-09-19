@@ -10,9 +10,7 @@ import {
   cleanupMockData,
   setupDummyFamily
 } from '@/lib/dev-mode'
-import type { Database } from '@/lib/database.types'
 
-type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface DevControlsProps {
   userId: string

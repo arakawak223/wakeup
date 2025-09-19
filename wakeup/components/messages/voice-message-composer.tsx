@@ -62,7 +62,6 @@ export function VoiceMessageComposer({
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
   const [recordedUrl, setRecordedUrl] = useState<string>('')
   const [originalQualityScore, setOriginalQualityScore] = useState<number>(0)
-  const [originalSettings, setOriginalSettings] = useState<AudioSettings | null>(null)
   const [filteredBlob, setFilteredBlob] = useState<Blob | null>(null)
   const [filteredUrl, setFilteredUrl] = useState<string>('')
   const [filteredQualityScore, setFilteredQualityScore] = useState<number>(0)
@@ -93,7 +92,6 @@ export function VoiceMessageComposer({
 
     if (metadata) {
       setOriginalQualityScore(metadata.qualityScore)
-      setOriginalSettings(metadata.settings)
     }
 
     // デフォルトのメッセージタイトルを生成
@@ -179,9 +177,9 @@ export function VoiceMessageComposer({
     try {
       // 音声ファイルをアップロード
       const fileName = `voice_${userId}_${Date.now()}.wav`
-      const { audioUrl, error: uploadError } = await uploadVoiceMessage(finalBlob, fileName)
+      const uploadResult = await uploadVoiceMessage(finalBlob, fileName, userId)
 
-      if (uploadError) throw uploadError
+      if (!uploadResult) throw new Error('音声ファイルのアップロードに失敗しました')
 
       // データベースにメッセージを保存
       const finalScore = filteredBlob ? filteredQualityScore : originalQualityScore
@@ -191,14 +189,14 @@ export function VoiceMessageComposer({
           sender_id: userId,
           receiver_id: receiverId,
           title: messageTitle || '音声メッセージ',
-          audio_url: audioUrl,
+          audio_url: uploadResult.url,
           category: selectedCategory,
           duration: 0, // 実際の再生時間は別途計算
           quality_score: Math.round(finalScore),
           filter_applied: selectedPreset !== 'none',
           transcription: transcriptionResult?.text || null,
           transcription_confidence: transcriptionResult?.confidence ? Math.round(transcriptionResult.confidence * 100) : null,
-          emotion_primary: emotionResult?.primaryEmotion || null,
+          emotion_primary: emotionResult?.dominantEmotion || null,
           emotion_confidence: emotionResult?.confidence ? Math.round(emotionResult.confidence * 100) : null,
           emotion_arousal: emotionResult?.arousal || null,
           emotion_valence: emotionResult?.valence || null
@@ -259,7 +257,7 @@ export function VoiceMessageComposer({
   /**
    * カスタムフィルター設定の更新
    */
-  const updateCustomFilter = useCallback((key: keyof FilterOptions, value: any) => {
+  const updateCustomFilter = useCallback((key: keyof FilterOptions, value: unknown) => {
     setCustomFilters(prev => ({
       ...prev,
       [key]: value
@@ -557,7 +555,7 @@ export function VoiceMessageComposer({
                       <div>転写: ✓ (信頼度: {Math.round(transcriptionResult.confidence * 100)}%)</div>
                     )}
                     {emotionResult && (
-                      <div>感情: {emotionResult.primaryEmotion} (信頼度: {Math.round(emotionResult.confidence * 100)}%)</div>
+                      <div>感情: {emotionResult.dominantEmotion} (信頼度: {Math.round(emotionResult.confidence * 100)}%)</div>
                     )}
                   </div>
                 </div>

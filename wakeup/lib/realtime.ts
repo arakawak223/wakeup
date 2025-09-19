@@ -17,7 +17,7 @@ export interface NotificationData {
   type: NotificationType
   title: string
   message: string
-  data?: any
+  data?: Record<string, unknown>
   timestamp: string
 }
 
@@ -54,14 +54,8 @@ class RealtimeNotificationService {
             .eq('id', newMessage.sender_id)
             .single()
 
-          // 通知を表示
-          this.showNotification({
-            type: 'new_voice_message',
-            title: '新しい音声メッセージ',
-            message: `${sender?.display_name || '家族'}から「${newMessage.title}」が届きました`,
-            data: newMessage,
-            timestamp: new Date().toISOString()
-          })
+          // 音声メッセージ専用の強化された通知を表示
+          this.showVoiceMessageNotification(newMessage, sender?.display_name || '家族')
 
           callback(newMessage)
         }
@@ -172,6 +166,130 @@ class RealtimeNotificationService {
     this.listeners.delete(id)
   }
 
+  // 音声メッセージ専用の通知機能
+  private async showVoiceMessageNotification(message: VoiceMessage, senderName: string) {
+    // 音声メッセージの詳細情報付き通知
+    const notification: NotificationData = {
+      type: 'new_voice_message',
+      title: '🎵 新しい音声メッセージ',
+      message: `${senderName}から${message.title ? `「${message.title}」` : '音声メッセージ'}が届きました`,
+      data: {
+        messageId: message.id,
+        senderId: message.sender_id,
+        duration: message.duration,
+        category: message.category,
+        audioUrl: message.audio_url
+      },
+      timestamp: new Date().toISOString()
+    }
+
+    // 即座に通知配信
+    this.deliverVoiceMessageNotification(notification, message)
+
+    // アプリ内通知も配信
+    this.listeners.forEach(callback => {
+      callback(notification)
+    })
+  }
+
+  // 音声メッセージ専用の通知配信
+  private deliverVoiceMessageNotification(notification: NotificationData, message: VoiceMessage) {
+    // ブラウザの通知API（音声メッセージ用カスタマイズ）
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const browserNotification = new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        tag: `voice-message-${message.id}`,
+        requireInteraction: true, // 音声メッセージは要インタラクション
+        silent: false,
+        vibrate: [200, 100, 200], // バイブレーション対応
+        actions: [
+          {
+            action: 'play',
+            title: '▶️ 再生'
+          },
+          {
+            action: 'dismiss',
+            title: '後で'
+          }
+        ]
+      })
+
+      // 通知インタラクション処理
+      browserNotification.onclick = () => {
+        window.focus()
+        browserNotification.close()
+
+        // 音声メッセージの詳細ページまたは再生画面に移動
+        this.openVoiceMessage(message.id)
+      }
+
+      // アクションボタンの処理
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data.action === 'play' && event.data.messageId === message.id) {
+            // 音声再生を開始
+            this.playVoiceMessage(message.audio_url)
+          }
+        })
+      }
+
+      // 10秒後に自動閉じる
+      setTimeout(() => {
+        browserNotification.close()
+      }, 10000)
+    }
+
+    // デスクトップ通知音を再生
+    this.playNotificationSound('voice-message')
+  }
+
+  // 音声メッセージを開く
+  private openVoiceMessage(messageId: string) {
+    // メッセージ受信タブに切り替え
+    const receivedTab = document.querySelector('[data-tab="received"]') as HTMLButtonElement
+    if (receivedTab) {
+      receivedTab.click()
+
+      // 特定のメッセージにスクロール
+      setTimeout(() => {
+        const messageElement = document.querySelector(`[data-message-id="${messageId}"]`)
+        if (messageElement) {
+          messageElement.scrollIntoView({ behavior: 'smooth' })
+          // ハイライト効果
+          messageElement.classList.add('animate-pulse', 'bg-blue-50')
+          setTimeout(() => {
+            messageElement.classList.remove('animate-pulse', 'bg-blue-50')
+          }, 2000)
+        }
+      }, 100)
+    }
+  }
+
+  // 音声メッセージを直接再生
+  private playVoiceMessage(audioUrl: string) {
+    const audio = new Audio(audioUrl)
+    audio.play().catch(error => {
+      console.error('音声再生エラー:', error)
+    })
+  }
+
+  // 通知音を再生
+  private playNotificationSound(type: 'voice-message' | 'general') {
+    try {
+      // 音声メッセージ専用の通知音
+      const soundUrl = type === 'voice-message' ? '/sounds/voice-notification.mp3' : '/sounds/notification.mp3'
+      const audio = new Audio(soundUrl)
+      audio.volume = 0.5
+      audio.play().catch(() => {
+        // 音声再生失敗時は無視（ブラウザの自動再生ポリシーによる）
+      })
+    } catch {
+      // 音声ファイルが存在しない場合は無視
+    }
+  }
+
   // 通知を表示（スマート通知システム統合）
   private async showNotification(notification: NotificationData) {
     // スマート通知リクエストを作成
@@ -251,7 +369,7 @@ class RealtimeNotificationService {
   private playSoundNotification(type: string) {
     try {
       // 簡単なビープ音を生成
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
 
       let frequency: number
       switch (type) {
@@ -347,7 +465,7 @@ class RealtimeNotificationService {
 
   // 全ての購読を解除
   unsubscribeAll() {
-    this.channels.forEach((channel, channelName) => {
+    this.channels.forEach((channel) => {
       this.supabase.removeChannel(channel)
     })
     this.channels.clear()

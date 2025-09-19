@@ -63,7 +63,7 @@ export function ProfileManager() {
       } else {
         setError(result.error || 'プロフィール更新に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('プロフィール更新中にエラーが発生しました')
     } finally {
       setLoading(false)
@@ -85,7 +85,7 @@ export function ProfileManager() {
       } else {
         setError(result.error || 'メールアドレス更新に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('メールアドレス更新中にエラーが発生しました')
     } finally {
       setLoading(false)
@@ -119,7 +119,7 @@ export function ProfileManager() {
       } else {
         setError(result.error || 'パスワード更新に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('パスワード更新中にエラーが発生しました')
     } finally {
       setLoading(false)
@@ -139,7 +139,7 @@ export function ProfileManager() {
       } else {
         setError(result.error || 'アカウント削除に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('アカウント削除中にエラーが発生しました')
     } finally {
       setLoading(false)

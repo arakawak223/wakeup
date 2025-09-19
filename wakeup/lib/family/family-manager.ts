@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
-type FamilyConnection = Database['public']['Tables']['family_connections']['Row']
 type FamilyConnectionStatus = Database['public']['Tables']['family_connections']['Row']['status']
 
 export interface FamilyMember extends Profile {
@@ -46,8 +45,7 @@ export class FamilyManager {
       if (error) throw error
 
       const familyMembers: FamilyMember[] = connections?.map(connection => {
-        const isUser1 = connection.user1_id === this.userId
-        const member = isUser1 ? connection.user2 : connection.user1
+        const member = connection.user1_id === this.userId ? connection.user2 : connection.user1
 
         return {
           ...member,
@@ -83,7 +81,6 @@ export class FamilyManager {
       if (error) throw error
 
       const requests: ConnectionRequest[] = connections?.map(connection => {
-        const isUser1 = connection.user1_id === this.userId
         const requester = connection.created_by === connection.user1_id ? connection.user1 : connection.user2
         const receiver = connection.created_by === connection.user1_id ? connection.user2 : connection.user1
 

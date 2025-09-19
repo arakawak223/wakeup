@@ -18,8 +18,20 @@ export interface SpeechToTextOptions {
   grammars?: string[]
 }
 
+// Web Speech API basic interface
+interface SpeechRecognitionInterface {
+  start(): void
+  stop(): void
+  onresult: ((event: unknown) => void) | null
+  onerror: ((event: unknown) => void) | null
+  onend: (() => void) | null
+  continuous: boolean
+  lang: string
+  maxAlternatives: number
+}
+
 export class SpeechToTextService {
-  private recognition: SpeechRecognition | null = null
+  private recognition: SpeechRecognitionInterface | null = null
   private isListening = false
   private options: SpeechToTextOptions = {}
   private onResult?: (result: SpeechRecognitionResult) => void
@@ -47,7 +59,7 @@ export class SpeechToTextService {
       return false
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    const SpeechRecognition = (window as typeof window & { SpeechRecognition: typeof SpeechRecognition; webkitSpeechRecognition: typeof SpeechRecognition }).SpeechRecognition || (window as typeof window & { SpeechRecognition: typeof SpeechRecognition; webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition
 
     this.recognition = new SpeechRecognition()
     this.recognition.lang = this.options.language || 'ja-JP'

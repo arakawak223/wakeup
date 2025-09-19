@@ -10,7 +10,7 @@ interface PerformanceMetrics {
  * コンポーネントのレンダリング時間を測定
  */
 export function useRenderPerformance(componentName: string) {
-  const renderStartRef = useRef<number>()
+  const renderStartRef = useRef<number>(0)
   const [metrics, setMetrics] = useState<PerformanceMetrics[]>([])
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function useRenderPerformance(componentName: string) {
  * メモリ使用量の監視
  */
 export function useMemoryUsage() {
-  const [memoryInfo, setMemoryInfo] = useState<MemoryInfo | null>(null)
+  const [memoryInfo, setMemoryInfo] = useState<any | null>(null)
 
   useEffect(() => {
     const checkMemory = () => {

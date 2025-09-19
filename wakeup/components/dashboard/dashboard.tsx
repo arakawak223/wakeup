@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { MessageList } from '@/components/messages/message-list'
-import { MessageComposer } from '@/components/messages/message-composer'
-import { RelationshipManager } from '@/components/relationships/relationship-manager'
-import { RequestManager } from '@/components/requests/request-manager'
+import { VoiceMessageList } from '@/components/voice-message-list'
+import { VoiceMessageComposer } from '@/components/messages/voice-message-composer'
+import { FamilyManager } from '@/components/family/family-manager'
 import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
@@ -80,14 +79,14 @@ export function Dashboard({ user, profile }: DashboardProps) {
               <CardTitle>受信メッセージ</CardTitle>
             </CardHeader>
             <CardContent>
-              <MessageList userId={user.id} type="received" />
+              <VoiceMessageList user={user} />
             </CardContent>
           </Card>
         )}
 
         {activeTab === 'send' && canGive && (
           <div className="space-y-4">
-            <MessageComposer
+            <VoiceMessageComposer
               userId={user.id}
               receiverId={selectedReceiver || undefined}
               onMessageSent={() => {
@@ -114,7 +113,7 @@ export function Dashboard({ user, profile }: DashboardProps) {
               <CardTitle>関係管理</CardTitle>
             </CardHeader>
             <CardContent>
-              <RelationshipManager userId={user.id} userRole={profile.role} />
+              <FamilyManager userId={user.id} />
             </CardContent>
           </Card>
         )}
@@ -127,7 +126,7 @@ export function Dashboard({ user, profile }: DashboardProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RequestManager userId={user.id} userRole={profile.role} />
+              <FamilyManager userId={user.id} />
             </CardContent>
           </Card>
         )}

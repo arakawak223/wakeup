@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
-import { DatePicker } from '@/components/ui/date-picker'
 import { MessageSearchService, type SearchFilters, type SearchResult, type MessageStatistics, type PersonalizedInsights } from '@/lib/messages/message-search'
 
 interface MessageDashboardProps {
@@ -46,19 +45,13 @@ export function MessageDashboard({ userId, className = '' }: MessageDashboardPro
   const [activeTab, setActiveTab] = useState('search')
 
   // 検索フィルター状態
-  const [filters, setFilters] = useState<SearchFilters>({})
   const [textQuery, setTextQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedEmotion, setSelectedEmotion] = useState<string>('')
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({})
   const [qualityRange, setQualityRange] = useState({ min: 0, max: 100 })
 
-  // 初期データ読み込み
-  useEffect(() => {
-    loadInitialData()
-  }, [userId])
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setIsLoading(true)
     try {
       const [statsResult, insightsResult, searchResult] = await Promise.all([
@@ -75,7 +68,12 @@ export function MessageDashboard({ userId, className = '' }: MessageDashboardPro
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [userId, searchService])
+
+  // 初期データ読み込み
+  useEffect(() => {
+    loadInitialData()
+  }, [loadInitialData])
 
   // 検索実行
   const executeSearch = async () => {

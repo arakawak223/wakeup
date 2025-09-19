@@ -381,7 +381,7 @@ export class SmartNotificationSystem {
   /**
    * 通知統計の取得
    */
-  async getNotificationStats(userId: string, period: 'day' | 'week' | 'month' = 'day'): Promise<{
+  async getNotificationStats(): Promise<{
     total: number
     delivered: number
     delayed: number

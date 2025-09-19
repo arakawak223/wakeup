@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { FamilyManager } from '@/lib/family/family-manager'
 import { useAuth } from '@/contexts/auth-context'
 import type { Database } from '@/lib/database.types'
@@ -45,7 +44,7 @@ export function FamilyInvite({ onInviteSuccess }: FamilyInviteProps) {
       } else {
         setError(result.error || 'ユーザー検索に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('検索中にエラーが発生しました')
     } finally {
       setIsSearching(false)
@@ -70,7 +69,7 @@ export function FamilyInvite({ onInviteSuccess }: FamilyInviteProps) {
       } else {
         setError(result.error || '招待の送信に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('招待送信中にエラーが発生しました')
     } finally {
       setIsInviting(false)

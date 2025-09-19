@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { VoiceMessageList } from '@/components/voice-message-list'
 import { SupabaseAudioManager } from '@/lib/audio/supabase-audio'
 import type { User } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
@@ -40,7 +39,7 @@ export function SentHistory({ user }: SentHistoryProps) {
     categoryCounts: {} as Record<string, number>
   })
 
-  const audioManager = new SupabaseAudioManager()
+  const audioManager = useMemo(() => new SupabaseAudioManager(), [])
 
   // メッセージを読み込み
   const loadMessages = useCallback(async () => {

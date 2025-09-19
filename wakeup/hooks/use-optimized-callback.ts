@@ -38,7 +38,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
   delay: number,
   deps: any[]
 ): T {
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   return useCallback(
     ((...args: any[]) => {

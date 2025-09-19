@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -31,11 +31,7 @@ export function VoiceSampleManager({ userId, onSampleSaved }: VoiceSampleManager
   const chunksRef = useRef<Blob[]>([])
   const supabase = createClient()
 
-  useEffect(() => {
-    loadVoiceSamples()
-  }, [userId])
-
-  const loadVoiceSamples = async () => {
+  const loadVoiceSamples = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('voice_samples')
@@ -48,7 +44,11 @@ export function VoiceSampleManager({ userId, onSampleSaved }: VoiceSampleManager
     } catch (error) {
       console.error('音声サンプル読み込みエラー:', error)
     }
-  }
+  }, [userId, supabase])
+
+  useEffect(() => {
+    loadVoiceSamples()
+  }, [loadVoiceSamples])
 
   const startRecording = async () => {
     try {
@@ -93,7 +93,7 @@ export function VoiceSampleManager({ userId, onSampleSaved }: VoiceSampleManager
     try {
       // 音声ファイルをアップロード
       const fileName = `voice_sample_${userId}_${Date.now()}.webm`
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('voice-samples')
         .upload(fileName, audioBlob)
 

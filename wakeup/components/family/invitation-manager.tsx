@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,10 @@ export function InvitationManager({ onRequestHandled, refreshTrigger }: Invitati
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const familyManager = user ? new FamilyManager(user.id) : null
+  const familyManager = useMemo(() =>
+    user ? new FamilyManager(user.id) : null,
+    [user]
+  )
 
   const loadPendingRequests = useCallback(async () => {
     if (!familyManager) return
@@ -35,7 +38,7 @@ export function InvitationManager({ onRequestHandled, refreshTrigger }: Invitati
       } else {
         setError(result.error || '招待情報の取得に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('招待情報取得中にエラーが発生しました')
     } finally {
       setIsLoading(false)
@@ -61,7 +64,7 @@ export function InvitationManager({ onRequestHandled, refreshTrigger }: Invitati
       } else {
         setError(result.error || '招待の承認に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('招待承認中にエラーが発生しました')
     } finally {
       setProcessingId(null)
@@ -87,7 +90,7 @@ export function InvitationManager({ onRequestHandled, refreshTrigger }: Invitati
       } else {
         setError(result.error || '招待の拒否に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('招待拒否中にエラーが発生しました')
     } finally {
       setProcessingId(null)

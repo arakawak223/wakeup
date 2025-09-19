@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabaseAudioManager, type AudioMetadata } from '@/lib/audio/supabase-audio'
-import { AudioAnalyzer, type AudioSettings, type AudioMetrics } from '@/lib/audio/audio-analyzer'
+import { AudioAnalyzer, type AudioMetrics } from '@/lib/audio/audio-analyzer'
 import { generateDummyAudioBlob } from '@/lib/dummy-audio'
 import { isDevMode } from '@/lib/dev-mode'
 import type { User } from '@supabase/supabase-js'
@@ -229,7 +229,7 @@ export function VoiceRecorderSupabase({
       setUploadProgress(100)
 
       // 成功コールバック
-      if (onRecordingComplete) {
+      if (onRecordingComplete && result.messageId) {
         onRecordingComplete(result.messageId)
       }
 
@@ -314,7 +314,7 @@ export function VoiceRecorderSupabase({
       }
     ).then((result) => {
       console.log('テスト音声が保存されました:', result)
-      if (onRecordingComplete) {
+      if (onRecordingComplete && result.messageId) {
         onRecordingComplete(result.messageId)
       }
       resetForm()

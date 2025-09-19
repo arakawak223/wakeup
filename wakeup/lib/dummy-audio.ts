@@ -7,7 +7,7 @@ export function generateDummyAudioBlob(durationSeconds: number = 3): Blob {
   const numSamples = sampleRate * durationSeconds
 
   // AudioBufferを作成
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+  const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
   const audioBuffer = audioContext.createBuffer(numChannels, numSamples, sampleRate)
 
   // 簡単なサイン波を生成

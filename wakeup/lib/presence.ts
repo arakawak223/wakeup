@@ -95,7 +95,7 @@ class PresenceService {
   }
 
   // プレゼンス状態を変換
-  private transformPresenceState(state: Record<string, any[]>): PresenceState[] {
+  private transformPresenceState(state: Record<string, PresenceState[]>): PresenceState[] {
     return Object.values(state).flat()
   }
 

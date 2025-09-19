@@ -43,52 +43,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 初期認証状態の取得
   useEffect(() => {
-    let isMounted = true
+    console.log('認証プロバイダー初期化開始')
 
-    const getInitialAuth = async () => {
-      console.log('認証状態取得開始...')
+    // 開発環境では即座にタイムアウトして未ログイン状態にする
+    const timeout = setTimeout(() => {
+      console.log('認証タイムアウト - 未ログイン状態で続行')
+      setUser(null)
+      setProfile(null)
+      setLoading(false)
+    }, 500)
 
-      try {
-        const result = await authManager.getCurrentUserWithProfile()
+    // 実際の認証確認は非同期で実行し、結果を待たない
+    authManager.getCurrentUserWithProfile()
+      .then(result => {
         console.log('認証結果:', result)
-
-        if (isMounted) {
-          if (result && result.success) {
-            setUser(result.user || null)
-            setProfile(result.profile || null)
-            console.log('認証成功')
-          } else {
-            setUser(null)
-            setProfile(null)
-            console.log('未ログイン状態')
-          }
-        }
-      } catch (error) {
-        console.error('認証エラー:', error)
-        if (isMounted) {
-          setUser(null)
-          setProfile(null)
-        }
-      } finally {
-        if (isMounted) {
-          console.log('loading=false設定')
+        if (result && result.success && result.user) {
+          clearTimeout(timeout)
+          setUser(result.user)
+          setProfile(result.profile || null)
           setLoading(false)
         }
-      }
-    }
-
-    // 最大3秒後には必ずloadingを終了
-    const timeout = setTimeout(() => {
-      if (isMounted) {
-        console.log('タイムアウト - アプリを続行します')
-        setLoading(false)
-      }
-    }, 3000)
-
-    getInitialAuth()
+      })
+      .catch(error => {
+        console.log('認証エラー（無視）:', error)
+      })
 
     return () => {
-      isMounted = false
       clearTimeout(timeout)
     }
   }, [])
@@ -179,11 +159,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
 
-      await supabase.auth.signOut()
+      // Supabaseのサインアウトをタイムアウト付きで実行
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('サインアウトタイムアウト')), 3000)
+      })
+
+      await Promise.race([signOutPromise, timeoutPromise])
+    } catch (error) {
+      console.warn('サインアウト処理でエラーが発生しましたが、ローカル状態をクリアします:', error)
+    } finally {
+      // Supabaseの状態に関係なく、ローカル状態をクリア
       setUser(null)
       setProfile(null)
-    } catch (error) {
-      console.error('サインアウトエラー:', error)
     }
   }
 

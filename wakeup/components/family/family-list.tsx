@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,7 +18,10 @@ export function FamilyList({ onMemberSelect, refreshTrigger }: FamilyListProps) 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const familyManager = user ? new FamilyManager(user.id) : null
+  const familyManager = useMemo(() =>
+    user ? new FamilyManager(user.id) : null,
+    [user]
+  )
 
   const loadFamilyMembers = useCallback(async () => {
     if (!familyManager) return
@@ -34,7 +37,7 @@ export function FamilyList({ onMemberSelect, refreshTrigger }: FamilyListProps) 
       } else {
         setError(result.error || '家族メンバーの取得に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('家族メンバー取得中にエラーが発生しました')
     } finally {
       setIsLoading(false)
@@ -60,7 +63,7 @@ export function FamilyList({ onMemberSelect, refreshTrigger }: FamilyListProps) 
       } else {
         setError(result.error || 'メンバー削除に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('メンバー削除中にエラーが発生しました')
     }
   }

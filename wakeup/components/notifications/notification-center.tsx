@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useRealtimeNotifications, type NotificationData } from '@/lib/realtime'
+import { useRealtimeNotifications } from '@/lib/realtime'
 
 interface NotificationCenterProps {
   userId: string

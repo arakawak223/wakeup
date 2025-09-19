@@ -89,7 +89,7 @@ export function MessageRequest({ userId, familyMembers }: MessageRequestProps) {
 
       // プロファイル情報を別途取得
       const sentWithProfiles = await Promise.all(
-        (sent || []).map(async (request) => {
+        (sent || []).map(async (request: Database['public']['Tables']['message_requests']['Row']) => {
           const { data: requesterProfile } = await supabase
             .from('profiles')
             .select('id, display_name, email')
@@ -111,7 +111,7 @@ export function MessageRequest({ userId, familyMembers }: MessageRequestProps) {
       )
 
       const receivedWithProfiles = await Promise.all(
-        (received || []).map(async (request) => {
+        (received || []).map(async (request: Database['public']['Tables']['message_requests']['Row']) => {
           const { data: requesterProfile } = await supabase
             .from('profiles')
             .select('id, display_name, email')

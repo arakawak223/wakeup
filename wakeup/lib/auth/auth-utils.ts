@@ -3,7 +3,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import type { Database } from '@/lib/database.types'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -30,12 +30,25 @@ export class AuthManager {
     try {
       console.log('認証状態確認開始...')
 
-      // 迅速にセッションを確認
-      const { data: { session } } = await this.supabase.auth.getSession()
+      // Supabaseセッション確認（タイムアウト付き）
+      const sessionPromise = this.supabase.auth.getSession()
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('セッション確認タイムアウト')), 1500)
+      })
+
+      let sessionResult
+      try {
+        sessionResult = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: { user?: { id: string } } } }
+      } catch (error) {
+        console.log('セッション確認タイムアウト/エラー:', error)
+        return { success: true, user: undefined, profile: undefined }
+      }
+
+      const { data: { session } } = sessionResult
 
       if (!session?.user) {
         console.log('セッションなし - 未ログイン状態')
-        return { success: true, user: null, profile: undefined }
+        return { success: true, user: undefined, profile: undefined }
       }
 
       const user = session.user
@@ -51,13 +64,14 @@ export class AuthManager {
 
         console.log('プロフィール取得完了')
         return { success: true, user, profile: profile || undefined }
-      } catch (profileError) {
+      } catch {
         console.log('プロフィール取得をスキップ')
         // プロフィール取得失敗でもユーザー情報は返す
         return { success: true, user, profile: undefined }
       }
     } catch (error) {
       console.log('認証エラーですが継続:', error)
+      // 開発環境では即座に未ログイン状態を返す
       return { success: true, user: null, profile: undefined }
     }
   }
@@ -214,7 +228,7 @@ export class AuthManager {
    * 認証状態の変更を監視
    */
   onAuthStateChange(callback: (user: User | null, profile?: Profile) => void) {
-    return this.supabase.auth.onAuthStateChange(async (event, session) => {
+    return this.supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       const user = session?.user || null
 
       if (user) {

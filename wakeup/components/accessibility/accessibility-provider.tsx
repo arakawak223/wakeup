@@ -128,7 +128,7 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
   useEffect(() => {
     if (keyboardNavigationEnabled && accessibilityEnabled) {
       keyboardNavigationService.activate(
-        (element, _index) => {
+        (element) => {
           if (speechEnabled && textToSpeech) {
             const label = element?.label || 'Unknown element'
             textToSpeech.speakNavigation('button_focused', label)

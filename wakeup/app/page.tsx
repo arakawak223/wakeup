@@ -1,11 +1,14 @@
 'use client'
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context"
+import type { User } from '@supabase/supabase-js'
 import { EnhancedLoginForm } from "@/components/auth/enhanced-login-form"
 import { ProfileSetup } from "@/components/auth/profile-setup"
 import { FamilyDashboard } from "@/components/dashboard/family-dashboard"
 import { EnhancedAuthButton } from "@/components/enhanced-auth-button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
+import { VoiceRecorderSupabase } from "@/components/voice-recorder-supabase"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 
 function TestComponent() {
@@ -51,6 +54,38 @@ function TestComponent() {
 
             <div className="flex-1 flex items-center justify-center">
               <EnhancedLoginForm />
+            </div>
+
+            {/* 開発用音声テスト（認証なし） */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>🧪 開発テスト - 音声録音（認証なし）</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                      開発環境での音声録音テスト。実際のユーザー認証は不要です。
+                    </p>
+                    <VoiceRecorderSupabase
+                      user={{
+                        id: 'test-user',
+                        email: 'test@example.com',
+                        app_metadata: {},
+                        user_metadata: {},
+                        aud: 'authenticated',
+                        created_at: new Date().toISOString()
+                      } as User}
+                      onRecordingComplete={(messageId) => {
+                        console.log('開発テスト録音完了:', messageId)
+                        alert(`開発テスト録音が完了しました！メッセージID: ${messageId}`)
+                      }}
+                      showQualityMetrics={true}
+                      mode="standalone"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
@@ -126,8 +161,28 @@ function TestComponent() {
           </div>
         </nav>
 
-        <div className="flex-1 w-full py-8">
+        <div className="flex-1 w-full py-8 space-y-8">
           <FamilyDashboard user={user} profile={profile} />
+
+          {/* 音声録音テスト */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>🎤 音声録音テスト</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VoiceRecorderSupabase
+                  user={user}
+                  onRecordingComplete={(messageId) => {
+                    console.log('録音完了:', messageId)
+                    alert(`録音が完了しました！メッセージID: ${messageId}`)
+                  }}
+                  showQualityMetrics={true}
+                  mode="standalone"
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-8">

@@ -73,8 +73,8 @@ export interface Database {
           message_type: string
           request_id: string | null
           is_read: boolean
-          audio_metadata: any | null
-          emotion_analysis: any | null
+          audio_metadata: Record<string, unknown> | null
+          emotion_analysis: Record<string, unknown> | null
           emotion_analyzed_at: string | null
           dominant_emotion: string | null
           emotion_confidence: number | null
@@ -99,8 +99,8 @@ export interface Database {
           message_type?: string
           request_id?: string | null
           is_read?: boolean
-          audio_metadata?: any | null
-          emotion_analysis?: any | null
+          audio_metadata?: Record<string, unknown> | null
+          emotion_analysis?: Record<string, unknown> | null
           emotion_analyzed_at?: string | null
           dominant_emotion?: string | null
           emotion_confidence?: number | null
@@ -125,8 +125,8 @@ export interface Database {
           message_type?: string
           request_id?: string | null
           is_read?: boolean
-          audio_metadata?: any | null
-          emotion_analysis?: any | null
+          audio_metadata?: Record<string, unknown> | null
+          emotion_analysis?: Record<string, unknown> | null
           emotion_analyzed_at?: string | null
           dominant_emotion?: string | null
           emotion_confidence?: number | null
@@ -177,7 +177,7 @@ export interface Database {
           type: 'message_received' | 'connection_request' | 'connection_accepted'
           title: string
           message: string
-          data: any | null
+          data: Record<string, unknown> | null
           is_read: boolean
           created_at: string
         }
@@ -187,7 +187,7 @@ export interface Database {
           type: 'message_received' | 'connection_request' | 'connection_accepted'
           title: string
           message: string
-          data?: any | null
+          data?: Record<string, unknown> | null
           is_read?: boolean
           created_at?: string
         }
@@ -197,7 +197,7 @@ export interface Database {
           type?: 'message_received' | 'connection_request' | 'connection_accepted'
           title?: string
           message?: string
-          data?: any | null
+          data?: Record<string, unknown> | null
           is_read?: boolean
           created_at?: string
         }

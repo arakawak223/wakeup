@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -25,8 +25,10 @@ export function InboxNotifications({ onMessageClick, className }: InboxNotificat
   const [showNotifications, setShowNotifications] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const audioManager = user ? new SupabaseAudioManager() : null
-  const realtimeManager = user ? new RealtimeManager(user.id) : null
+  const audioManager = useMemo(() =>
+    user ? new SupabaseAudioManager() : null, [user])
+  const realtimeManager = useMemo(() =>
+    user ? new RealtimeManager(user.id) : null, [user])
 
   // 最近のメッセージを読み込み
   const loadRecentMessages = useCallback(async () => {
@@ -45,6 +47,15 @@ export function InboxNotifications({ onMessageClick, className }: InboxNotificat
       setUnreadCount(messages.filter(msg => !msg.is_read).length)
     } catch (error) {
       console.error('最近のメッセージ読み込みエラー:', error)
+      // ユーザーに分かりやすいエラーメッセージを表示
+      if (error instanceof Error) {
+        if (error.message.includes('ネットワーク接続エラー')) {
+          // ネットワークエラーの場合は通知を控えめに
+          console.warn('Supabase接続エラー - ネットワークを確認してください')
+        } else if (error.message.includes('ログインが必要')) {
+          console.warn('認証が必要です')
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -97,7 +108,7 @@ export function InboxNotifications({ onMessageClick, className }: InboxNotificat
   const playNotificationSound = () => {
     try {
       // 簡単な通知音（実際の実装では音声ファイルを使用）
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 

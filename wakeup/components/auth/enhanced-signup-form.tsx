@@ -109,7 +109,7 @@ export function EnhancedSignupForm({
       } else {
         setError(result.error || 'サインアップに失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('サインアップ中にエラーが発生しました')
     } finally {
       setIsLoading(false)

@@ -88,6 +88,39 @@ export function EnhancedVoiceRecorder(props: EnhancedVoiceRecorderProps = {}) {
   }, [isAnalyzing])
 
   /**
+   * 最適な設定を適用してストリームを再初期化
+   */
+  const applyOptimalSettings = useCallback(async () => {
+    if (!audioAnalyzerRef.current) return
+
+    try {
+      const recommendations = audioAnalyzerRef.current.getRecommendedSettings()
+
+      // 既存のストリームをクリーンアップ
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+      }
+
+      // 推奨設定でストリームを再取得
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: recommendations.echoCancellation,
+          noiseSuppression: recommendations.noiseSuppression,
+          autoGainControl: recommendations.autoGainControl,
+          sampleRate: recommendations.sampleRate,
+          channelCount: 1
+        }
+      })
+
+      streamRef.current = stream
+      audioAnalyzerRef.current.startAnalysis(stream)
+
+    } catch (error) {
+      console.error('最適設定適用エラー:', error)
+    }
+  }, [])
+
+  /**
    * 音声分析を開始
    */
   const startAnalysis = useCallback(async () => {
@@ -129,43 +162,7 @@ export function EnhancedVoiceRecorder(props: EnhancedVoiceRecorderProps = {}) {
       setIsPreparing(false)
       setIsAnalyzing(false)
     }
-  }, [])
-
-  /**
-   * 最適な設定を適用してストリームを再初期化
-   */
-  const applyOptimalSettings = useCallback(async () => {
-    if (!audioAnalyzerRef.current) return
-
-    try {
-      const settings = audioAnalyzerRef.current.getRecommendedSettings()
-
-      // 既存のストリームを停止
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-      }
-
-      // 推奨設定でストリームを再取得
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: settings.echoCancellation,
-          noiseSuppression: settings.noiseSuppression,
-          autoGainControl: settings.autoGainControl,
-          sampleRate: settings.sampleRate,
-          channelCount: settings.channelCount
-        }
-      })
-
-      streamRef.current = newStream
-
-      // 分析を新しいストリームで再開
-      audioAnalyzerRef.current.stopAnalysis()
-      audioAnalyzerRef.current.startAnalysis(newStream)
-
-    } catch (error) {
-      console.error('最適設定適用エラー:', error)
-    }
-  }, [])
+  }, [applyOptimalSettings])
 
   /**
    * 録音開始

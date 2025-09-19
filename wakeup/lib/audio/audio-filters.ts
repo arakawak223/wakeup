@@ -32,7 +32,7 @@ export class AudioProcessor {
 
   private initializeAudioContext() {
     try {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      this.audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
     } catch (error) {
       console.error('AudioContext初期化エラー:', error)
     }

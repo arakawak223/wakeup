@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -41,7 +41,8 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const audioManager = user ? new SupabaseAudioManager() : null
+  const audioManager = useMemo(() =>
+    user ? new SupabaseAudioManager() : null, [user])
 
   // メッセージを読み込み
   const loadMessages = useCallback(async () => {

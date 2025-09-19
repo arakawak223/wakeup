@@ -11,11 +11,11 @@ import { FamilyVoiceChat } from '@/components/family/family-voice-chat'
 import { IntegratedVoiceSender } from '@/components/messages/integrated-voice-sender'
 import { MessageRequest } from '@/components/messages/message-request'
 import { VoiceMessageComposer } from '@/components/messages/voice-message-composer'
-import { VoiceMessageList } from '@/components/voice-message-list'
 import { SentHistory } from '@/components/messages/sent-history'
 import { VoiceMessageReceiver } from '@/components/messages/voice-message-receiver'
-import { MessageDetailReceiver } from '@/components/messages/message-detail-receiver'
 import { InboxNotifications } from '@/components/messages/inbox-notifications'
+import { VoiceFunctionalityTest } from '@/components/test/voice-functionality-test'
+import { E2EVoiceTest } from '@/components/test/e2e-voice-test'
 import { NotificationSettingsComponent } from '@/components/notifications/notification-settings'
 import { DevControls } from '@/components/dev-mode/dev-controls'
 import { NotificationCenter } from '@/components/notifications/notification-center'
@@ -34,13 +34,12 @@ interface FamilyDashboardProps {
   profile: Profile
 }
 
-type DashboardTab = 'chat' | 'family' | 'requests' | 'send' | 'advanced' | 'received' | 'sent' | 'settings'
+type DashboardTab = 'chat' | 'family' | 'requests' | 'send' | 'advanced' | 'received' | 'sent' | 'settings' | 'test'
 
 export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('chat')
   const [familyMembers, setFamilyMembers] = useState<Profile[]>([])
   const [refreshTrigger, setRefreshTrigger] = useState(0)
-  const [messageRefreshTrigger, setMessageRefreshTrigger] = useState(0)
   const supabase = createClient()
 
   // 承認済みの家族メンバーを取得
@@ -60,7 +59,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
 
       // 自分以外のユーザーを家族メンバーとして抽出
       const members: Profile[] = []
-      data?.forEach((connection: any) => {
+      data?.forEach((connection: Database['public']['Tables']['family_connections']['Row'] & { user1: Profile; user2: Profile }) => {
         const otherUser = connection.user1_id === user.id ? connection.user2 : connection.user1
         members.push(otherUser)
       })
@@ -87,7 +86,7 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
   useEffect(() => {
     // 音声メッセージの受信を監視
     const voiceChannelId = realtimeService.subscribeToVoiceMessages(user.id, () => {
-      setMessageRefreshTrigger(prev => prev + 1)
+      setRefreshTrigger((prev: number) => prev + 1)
     })
 
     // メッセージリクエストの受信を監視
@@ -200,6 +199,14 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
           className="text-lg"
         >
           ⚙️ 設定
+        </Button>
+
+        <Button
+          variant={activeTab === 'test' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('test')}
+          className="text-lg"
+        >
+          🧪 テスト
         </Button>
       </div>
 
@@ -317,6 +324,13 @@ export function FamilyDashboard({ user, profile }: FamilyDashboardProps) {
                 console.log('通知設定が更新されました:', settings)
               }}
             />
+          </div>
+        )}
+
+        {activeTab === 'test' && (
+          <div className="space-y-6">
+            <VoiceFunctionalityTest />
+            <E2EVoiceTest />
           </div>
         )}
       </div>

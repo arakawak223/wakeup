@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
-import { Progress } from '@/components/ui/progress'
 
 interface AudioPreviewProps {
   audioBlob: Blob
@@ -37,7 +36,7 @@ export function AudioPreview({
 
   const audioRef = useRef<HTMLAudioElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
 
   // 音声ファイルの情報を取得
   const [fileSize, setFileSize] = useState(0)

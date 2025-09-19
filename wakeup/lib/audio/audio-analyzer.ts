@@ -21,16 +21,23 @@ export interface AudioSettings {
 
 export class AudioAnalyzer {
   private analyserNode: AnalyserNode | null = null
-  private dataArray: Uint8Array = new Uint8Array()
+  private dataArray: Uint8Array = new Uint8Array(0)
   private metrics: AudioMetrics[] = []
   private isAnalyzing = false
+
+  /**
+   * ストリームから音声分析を初期化
+   */
+  async initializeFromStream(stream: MediaStream): Promise<void> {
+    this.startAnalysis(stream)
+  }
 
   /**
    * 音声分析を開始
    */
   startAnalysis(stream: MediaStream): AudioAnalyzer {
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
       const source = audioContext.createMediaStreamSource(stream)
 
       this.analyserNode = audioContext.createAnalyser()

@@ -49,7 +49,7 @@ export function EnhancedLoginForm({
       } else {
         setError(result.error || 'ログインに失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('ログイン中にエラーが発生しました')
     } finally {
       setIsLoading(false)
@@ -75,7 +75,7 @@ export function EnhancedLoginForm({
       } else {
         setError(result.error || 'パスワードリセットメールの送信に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setError('パスワードリセット中にエラーが発生しました')
     } finally {
       setIsLoading(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,7 @@ export function VoiceMessageList({
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
-  const audioManager = new SupabaseAudioManager()
+  const audioManager = useMemo(() => new SupabaseAudioManager(), [])
 
   // メッセージ一覧を読み込み
   const loadMessages = useCallback(async () => {
@@ -113,7 +113,7 @@ export function VoiceMessageList({
 
       // 受信したメッセージの場合は既読にする
       if (message.receiver_id === user.id && !message.is_read) {
-        await audioManager.markMessageAsRead(message.id, user.id)
+        await audioManager.markMessageAsRead(message.id)
         // メッセージリストを更新
         setMessages(prev => prev.map(msg =>
           msg.id === message.id ? { ...msg, is_read: true } : msg
@@ -162,7 +162,7 @@ export function VoiceMessageList({
 
     try {
       await Promise.all(
-        unreadMessages.map(msg => audioManager.markMessageAsRead(msg.id, user.id))
+        unreadMessages.map(msg => audioManager.markMessageAsRead(msg.id))
       )
       setMessages(prev => prev.map(msg => ({ ...msg, is_read: true })))
     } catch (error) {
@@ -417,7 +417,7 @@ export function VoiceMessageList({
                       variant="ghost"
                       onClick={(e) => {
                         e.stopPropagation()
-                        audioManager.markMessageAsRead(message.id, user.id)
+                        audioManager.markMessageAsRead(message.id)
                         setMessages(prev => prev.map(msg =>
                           msg.id === message.id ? { ...msg, is_read: true } : msg
                         ))

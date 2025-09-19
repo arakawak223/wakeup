@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -22,12 +22,7 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
 
-  // 設定の読み込み
-  useEffect(() => {
-    loadSettings()
-  }, [userId])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setLoading(true)
       const userSettings = await smartNotificationSystem.getUserSettings(userId)
@@ -37,7 +32,12 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
+
+  // 設定の読み込み
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
 
   const saveSettings = async () => {
     if (!settings) return
@@ -78,7 +78,7 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
     })
   }
 
-  const updateSchedule = (type: 'workdays' | 'weekends', updates: any) => {
+  const updateSchedule = (type: 'workdays' | 'weekends', updates: Partial<NotificationSettings['schedule']['workdays']>) => {
     if (!settings) return
     updateSettings({
       schedule: {
@@ -103,7 +103,7 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
     })
   }
 
-  const updateCustomRule = (ruleId: string, updates: any) => {
+  const updateCustomRule = (ruleId: string, updates: Partial<NotificationSettings['customRules'][0]>) => {
     if (!settings) return
     const updatedRules = settings.customRules.map(rule =>
       rule.id === ruleId ? { ...rule, ...updates } : rule
@@ -358,7 +358,7 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
                     <div className="grid grid-cols-3 gap-2">
                       <Select
                         value={rule.condition}
-                        onValueChange={(value) => updateCustomRule(rule.id, { condition: value })}
+                        onValueChange={(value) => updateCustomRule(rule.id, { condition: value as "content" | "time" | "sender" | "frequency" })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -379,7 +379,7 @@ export function NotificationSettingsComponent({ userId, onSettingsChanged }: Not
 
                       <Select
                         value={rule.action}
-                        onValueChange={(value) => updateCustomRule(rule.id, { action: value })}
+                        onValueChange={(value) => updateCustomRule(rule.id, { action: value as "allow" | "delay" | "suppress" })}
                       >
                         <SelectTrigger>
                           <SelectValue />
