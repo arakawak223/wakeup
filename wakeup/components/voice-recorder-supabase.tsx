@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { supabaseAudioManager, type AudioMetadata } from '@/lib/audio/supabase-audio'
 import { AudioAnalyzer, type AudioMetrics } from '@/lib/audio/audio-analyzer'
+import { EnhancedAudioAnalyzer, type EnhancedAudioMetrics } from '@/lib/audio/enhanced-audio-analyzer'
+import { EmotionVisualization } from '@/components/audio/emotion-visualization'
 import { AudioCompressor, type CompressionResult } from '@/lib/audio/audio-compression'
 import { generateDummyAudioBlob } from '@/lib/dummy-audio'
 import { isDevMode } from '@/lib/dev-mode'
@@ -59,16 +61,19 @@ export function VoiceRecorderSupabase({
 
   // Audio analysis states
   const [currentMetrics, setCurrentMetrics] = useState<AudioMetrics | null>(null)
+  const [enhancedMetrics, setEnhancedMetrics] = useState<EnhancedAudioMetrics | null>(null)
   const [qualityScore, setQualityScore] = useState(50)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [compressionInfo, setCompressionInfo] = useState<CompressionResult | null>(null)
   const [isCompressing, setIsCompressing] = useState(false)
+  const [showEmotionAnalysis] = useState(true)
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const audioAnalyzerRef = useRef<AudioAnalyzer | null>(null)
+  const enhancedAnalyzerRef = useRef<EnhancedAudioAnalyzer | null>(null)
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // サポートされている音声形式を検出
@@ -115,6 +120,13 @@ export function VoiceRecorderSupabase({
       console.log('音声分析を停止しました')
     }
 
+    // 拡張音声分析を停止
+    if (enhancedAnalyzerRef.current) {
+      enhancedAnalyzerRef.current.stopAnalysis()
+      enhancedAnalyzerRef.current = null
+      console.log('拡張音声分析を停止しました')
+    }
+
     // タイマーを停止
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current)
@@ -129,6 +141,7 @@ export function VoiceRecorderSupabase({
     setIsCompressing(false)
     setRecordingDuration(0)
     setCurrentMetrics(null)
+    setEnhancedMetrics(null)
     setQualityScore(50)
 
     // 音声データをクリア
@@ -142,7 +155,7 @@ export function VoiceRecorderSupabase({
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isRecording || isUploading) {
         event.preventDefault()
-        event.returnValue = '録音中またはアップロード中です。ページを離れますか？'
+        // Modern browsers use the default message
         return '録音中またはアップロード中です。ページを離れますか？'
       }
     }
@@ -218,6 +231,13 @@ export function VoiceRecorderSupabase({
       if (showQualityMetrics) {
         audioAnalyzerRef.current = new AudioAnalyzer()
         await audioAnalyzerRef.current.initializeFromStream(stream)
+
+        // 拡張音声分析の開始（感情分析用）
+        if (showEmotionAnalysis) {
+          enhancedAnalyzerRef.current = new EnhancedAudioAnalyzer()
+          await enhancedAnalyzerRef.current.initializeFromStream(stream)
+        }
+
         setIsAnalyzing(true)
         startMetricsUpdate()
       }
@@ -300,6 +320,11 @@ export function VoiceRecorderSupabase({
       // 音声分析を停止
       if (audioAnalyzerRef.current) {
         audioAnalyzerRef.current.stopAnalysis()
+      }
+
+      // 拡張音声分析を停止
+      if (enhancedAnalyzerRef.current) {
+        enhancedAnalyzerRef.current.stopAnalysis()
       }
 
       // 録音時間カウントを停止
@@ -509,6 +534,11 @@ export function VoiceRecorderSupabase({
         setCurrentMetrics(metrics)
         setQualityScore(audioAnalyzerRef.current.getQualityScore())
       }
+
+      if (enhancedAnalyzerRef.current && isAnalyzing) {
+        const enhanced = enhancedAnalyzerRef.current.getCurrentMetrics()
+        setEnhancedMetrics(enhanced)
+      }
     }
 
     const interval = setInterval(updateMetrics, 100)
@@ -521,6 +551,7 @@ export function VoiceRecorderSupabase({
     setCategory('general')
     setRecordingDuration(0)
     setCurrentMetrics(null)
+    setEnhancedMetrics(null)
     setQualityScore(50)
     setCompressionInfo(null)
   }
@@ -648,6 +679,17 @@ export function VoiceRecorderSupabase({
                   <div>音量: {Math.round(currentMetrics.volume)}%</div>
                   <div>明瞭度: {Math.round(currentMetrics.clarity)}%</div>
                 </div>
+              </div>
+            )}
+
+            {/* 感情分析 */}
+            {showEmotionAnalysis && enhancedMetrics && (
+              <div className="mt-2">
+                <EmotionVisualization
+                  metrics={enhancedMetrics}
+                  isRealtime={true}
+                  showDetails={false}
+                />
               </div>
             )}
           </div>

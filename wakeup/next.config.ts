@@ -3,15 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // パフォーマンス最適化
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
+    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr']
   },
 
   // 画像最適化
@@ -67,6 +59,15 @@ const nextConfig: NextConfig = {
       ],
     },
   ],
+
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    }
+  }
 };
 
 export default nextConfig;
