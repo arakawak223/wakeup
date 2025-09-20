@@ -12,6 +12,7 @@ import { supabaseAudioManager, type AudioMetadata } from '@/lib/audio/supabase-a
 import { AudioAnalyzer, type AudioMetrics } from '@/lib/audio/audio-analyzer'
 import { EnhancedAudioAnalyzer, type EnhancedAudioMetrics } from '@/lib/audio/enhanced-audio-analyzer'
 import { EmotionVisualization } from '@/components/audio/emotion-visualization'
+import { InlineSpeechToText } from '@/components/speech/speech-to-text-display'
 import { AudioCompressor, type CompressionResult } from '@/lib/audio/audio-compression'
 import { generateDummyAudioBlob } from '@/lib/dummy-audio'
 import { isDevMode } from '@/lib/dev-mode'
@@ -67,6 +68,8 @@ export function VoiceRecorderSupabase({
   const [compressionInfo, setCompressionInfo] = useState<CompressionResult | null>(null)
   const [isCompressing, setIsCompressing] = useState(false)
   const [showEmotionAnalysis] = useState(true)
+  const [showSpeechToText] = useState(true)
+  const [recognizedText, setRecognizedText] = useState('')
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -554,6 +557,7 @@ export function VoiceRecorderSupabase({
     setEnhancedMetrics(null)
     setQualityScore(50)
     setCompressionInfo(null)
+    setRecognizedText('')
   }
 
   // 開発モードでのダミー録音
@@ -689,6 +693,23 @@ export function VoiceRecorderSupabase({
                   metrics={enhancedMetrics}
                   isRealtime={true}
                   showDetails={false}
+                />
+              </div>
+            )}
+
+            {/* 音声認識（Speech-to-Text） */}
+            {showSpeechToText && (
+              <div className="mt-2">
+                <InlineSpeechToText
+                  isRecording={isRecording}
+                  onTranscriptChange={(transcript) => {
+                    setRecognizedText(transcript)
+                    // タイトルが空の場合、認識されたテキストの最初の部分を提案
+                    if (!title && transcript.length > 10) {
+                      const suggestedTitle = transcript.substring(0, 30) + (transcript.length > 30 ? '...' : '')
+                      setTitle(suggestedTitle)
+                    }
+                  }}
                 />
               </div>
             )}
