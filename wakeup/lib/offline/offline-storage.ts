@@ -20,10 +20,27 @@ export interface OfflineVoiceMessage {
   retryCount: number
 }
 
+export interface Profile {
+  id: string
+  display_name?: string
+  email?: string
+  avatar_url?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface FamilyConnection {
+  id: string
+  user_id: string
+  family_member_id: string
+  relationship?: string
+  created_at: string
+}
+
 export interface OfflineData {
   voiceMessages: OfflineVoiceMessage[]
-  profiles: any[]
-  familyConnections: any[]
+  profiles: Profile[]
+  familyConnections: FamilyConnection[]
   lastSync: number
 }
 
@@ -196,7 +213,7 @@ export class OfflineStorageManager {
   }
 
   // プロファイルをキャッシュ
-  async cacheProfile(profile: any): Promise<void> {
+  async cacheProfile(profile: Profile): Promise<void> {
     if (!this.db) {
       await this.initialize()
     }
@@ -215,7 +232,7 @@ export class OfflineStorageManager {
   }
 
   // キャッシュされたプロファイルを取得
-  async getCachedProfile(profileId: string): Promise<any | null> {
+  async getCachedProfile(profileId: string): Promise<Profile | null> {
     if (!this.db) {
       await this.initialize()
     }
@@ -242,7 +259,7 @@ export class OfflineStorageManager {
   }
 
   // 設定を保存
-  async saveSetting(key: string, value: any): Promise<void> {
+  async saveSetting(key: string, value: unknown): Promise<void> {
     if (!this.db) {
       await this.initialize()
     }
@@ -258,7 +275,7 @@ export class OfflineStorageManager {
   }
 
   // 設定を取得
-  async getSetting(key: string): Promise<any> {
+  async getSetting(key: string): Promise<unknown> {
     if (!this.db) {
       await this.initialize()
     }
@@ -315,7 +332,7 @@ export class OfflineStorageManager {
       await this.initialize()
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const transaction = this.db!.transaction([storeName], 'readonly')
       const store = transaction.objectStore(storeName)
       const request = store.count()
@@ -421,7 +438,16 @@ export const offlineStateManager = new OfflineStateManager()
 export function useOfflineStorage() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [pendingMessages, setPendingMessages] = useState<OfflineVoiceMessage[]>([])
-  const [storageUsage, setStorageUsage] = useState<any>(null)
+  const [storageUsage, setStorageUsage] = useState<{
+    estimated: number;
+    quota: number;
+    usagePercentage: number;
+    details: {
+      voiceMessages: number;
+      profiles: number;
+      settings: number;
+    };
+  } | null>(null)
 
   useEffect(() => {
     const handleOnlineStatusChange = (online: boolean) => {

@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { usePushNotifications, PushNotificationManager } from '@/lib/notifications/push-notification-manager'
 
 interface PushNotificationSetupProps {
   userId?: string
-  onSubscriptionChange?: (subscriptionInfo: any) => void
+  onSubscriptionChange?: (subscriptionInfo: PushSubscription | null) => void
   className?: string
 }
 
@@ -98,12 +97,12 @@ export function PushNotificationSetup({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert>
-            <AlertDescription>
+          <div className="p-4 border rounded-md bg-gray-50 border-gray-200">
+            <p className="text-sm text-gray-800">
               お使いのブラウザはプッシュ通知をサポートしていません。
               Chrome、Firefox、Safari、Edgeの最新版をお試しください。
-            </AlertDescription>
-          </Alert>
+            </p>
+          </div>
 
           {/* サポート状況の詳細 */}
           {supportInfo && (
@@ -152,9 +151,9 @@ export function PushNotificationSetup({
       <CardContent className="space-y-4">
         {/* エラー表示 */}
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="p-4 border rounded-md bg-red-50 border-red-200">
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
         )}
 
         {/* 通知の状態 */}
@@ -181,24 +180,24 @@ export function PushNotificationSetup({
 
         {/* 通知許可が必要な場合の説明 */}
         {permission === 'default' && (
-          <Alert>
-            <AlertDescription>
+          <div className="p-4 border rounded-md bg-blue-50 border-blue-200">
+            <p className="text-sm text-blue-800">
               通知を有効にするには、ブラウザからの許可が必要です。
               スイッチをオンにすると許可の確認が表示されます。
-            </AlertDescription>
-          </Alert>
+            </p>
+          </div>
         )}
 
         {/* 通知が拒否されている場合の説明 */}
         {permission === 'denied' && (
-          <Alert variant="destructive">
-            <AlertDescription>
+          <div className="p-4 border rounded-md bg-red-50 border-red-200">
+            <p className="text-sm text-red-800">
               通知が拒否されています。以下の手順で許可してください：
               <br />• ブラウザのアドレスバーの左側にある鍵アイコンをクリック
               <br />• 通知の設定を「許可」に変更
               <br />• ページを再読み込み
-            </AlertDescription>
-          </Alert>
+            </p>
+          </div>
         )}
 
         {/* テスト通知ボタン */}

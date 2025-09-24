@@ -54,6 +54,7 @@ export function VoiceRecorderSupabase({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [recordingDuration, setRecordingDuration] = useState(0)
+  const recordingStartTimeRef = useRef<number>(0)
   const [audioFormat, setAudioFormat] = useState<AudioFormat>('audio/webm')
 
   // Message data
@@ -69,7 +70,7 @@ export function VoiceRecorderSupabase({
   const [isCompressing, setIsCompressing] = useState(false)
   const [showEmotionAnalysis] = useState(true)
   const [showSpeechToText] = useState(true)
-  const [recognizedText, setRecognizedText] = useState('')
+  const [, setRecognizedText] = useState('')
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -286,10 +287,14 @@ export function VoiceRecorderSupabase({
       setIsPreparing(false)
       setRecordingDuration(0)
 
+      // 録音開始時刻を記録
+      recordingStartTimeRef.current = Date.now()
+
       // 録音時間をカウント
       durationIntervalRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1)
-      }, 1000)
+        const elapsed = (Date.now() - recordingStartTimeRef.current) / 1000
+        setRecordingDuration(Math.floor(elapsed))
+      }, 100) // より高精度で更新
 
     } catch (error) {
       console.error('録音開始エラー:', error)
@@ -363,12 +368,26 @@ export function VoiceRecorderSupabase({
         throw new Error('録音ファイルが大きすぎます。録音時間を短くしてください。')
       }
 
-      // 最低録音時間の検証（1秒）
-      if (recordingDuration < 1) {
-        throw new Error('録音が短すぎます。最低1秒以上録音してください。')
+      // 実際の録音時間を正確に計算
+      const actualRecordingDuration = recordingStartTimeRef.current > 0
+        ? (Date.now() - recordingStartTimeRef.current) / 1000
+        : recordingDuration
+
+      console.log(`実際の録音時間: ${actualRecordingDuration}秒`)
+
+      // 最低録音時間の検証（0.5秒、より短時間のテストを許可）
+      if (actualRecordingDuration < 0.5) {
+        console.warn(`録音時間が短いです: ${actualRecordingDuration}秒`)
+        // 開発モードでは警告のみ、プロダクションでは最低時間を適用
+        if (!isDevMode() && actualRecordingDuration < 1) {
+          throw new Error('録音が短すぎます。最低1秒以上録音してください。')
+        }
       }
 
-      console.log(`録音完了: ${audioBlob.size}バイト, ${recordingDuration}秒`)
+      // 録音時間を更新
+      const finalDuration = Math.max(actualRecordingDuration, 0.1)
+
+      console.log(`録音完了: ${audioBlob.size}バイト, ${finalDuration}秒`)
 
       setUploadProgress(30)
 
@@ -376,13 +395,13 @@ export function VoiceRecorderSupabase({
       let finalAudioBlob = audioBlob
       let compressionResult: CompressionResult | null = null
 
-      if (AudioCompressor.shouldCompress(audioBlob.size, recordingDuration)) {
+      if (AudioCompressor.shouldCompress(audioBlob.size, finalDuration)) {
         setIsCompressing(true)
         console.log('音声圧縮を開始します...')
 
         const compressionOptions = AudioCompressor.getRecommendedOptions(
           audioBlob.size,
-          recordingDuration
+          finalDuration
         )
 
         compressionResult = await AudioCompressor.compressAudio(audioBlob, compressionOptions)
@@ -410,7 +429,7 @@ export function VoiceRecorderSupabase({
       const metadata: AudioMetadata = {
         size: finalAudioBlob.size,
         format: compressionResult ? 'audio/wav' : audioFormat,
-        duration: recordingDuration,
+        duration: finalDuration,
         channels: 1,
         sampleRate: compressionResult ? 22050 : 44100
       }
@@ -425,7 +444,7 @@ export function VoiceRecorderSupabase({
           receiverId,
           title: title || `音声メッセージ ${new Date().toLocaleString('ja-JP')}`,
           category: category === 'general' ? undefined : category,
-          duration: recordingDuration,
+          duration: finalDuration,
           requestId
         },
         fileName,
@@ -444,15 +463,41 @@ export function VoiceRecorderSupabase({
 
       setUploadProgress(100)
 
-      // 成功コールバック
-      if (onRecordingComplete && result.messageId) {
-        onRecordingComplete(result.messageId)
+      // 保存結果を検証
+      if (!result.success) {
+        throw new Error(result.error || '音声メッセージの保存に失敗しました')
+      }
+
+      if (!result.messageId) {
+        throw new Error('メッセージIDが取得できませんでした')
+      }
+
+      console.log('✅ 音声メッセージが保存されました:', {
+        messageId: result.messageId,
+        audioUrl: result.audioUrl,
+        success: result.success
+      })
+
+      // 成功コールバック（確実に実行）
+      if (onRecordingComplete) {
+        console.log('📝 録音完了コールバック実行:', result.messageId)
+        console.log('📝 これによりrefreshTriggerが更新され、VoiceRecordingsListが再読み込みされます')
+        try {
+          onRecordingComplete(result.messageId)
+          console.log('✅ コールバック実行完了 - リスト再読み込みがトリガーされました')
+        } catch (callbackError) {
+          console.error('⚠️ コールバック実行エラー:', callbackError)
+          // コールバックエラーでも保存は成功しているので続行
+        }
+      } else {
+        console.warn('⚠️ onRecordingCompleteコールバックが設定されていません')
       }
 
       // フォームをリセット
       resetForm()
 
-      console.log('音声メッセージが保存されました:', result)
+      // 成功メッセージを表示
+      alert(`✅ 録音が完了しました！\nメッセージID: ${result.messageId}\n\n長男にメッセージが送信されました！`)
 
     } catch (error) {
       console.error('音声保存エラー:', error)

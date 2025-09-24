@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -46,7 +46,7 @@ export function OfflineIndicator({ className = '', showDetails = false }: Offlin
       try {
         await clearOfflineData()
         alert('オフラインデータを削除しました')
-      } catch (error) {
+      } catch {
         alert('データの削除に失敗しました')
       }
     }
@@ -117,7 +117,7 @@ export function OfflineIndicator({ className = '', showDetails = false }: Offlin
             </div>
 
             <div className="space-y-2 max-h-32 overflow-y-auto">
-              {pendingMessages.slice(0, 5).map((message, index) => (
+              {pendingMessages.slice(0, 5).map((message) => (
                 <div key={message.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs">
                   <div className="flex-1 min-w-0">
                     <div className="truncate font-medium">{message.title}</div>

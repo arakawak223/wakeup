@@ -25,7 +25,7 @@ interface EmotionVisualizationProps {
 
 // 感情マッピング関数
 const analyzeEmotion = (metrics: EnhancedAudioMetrics): EmotionData => {
-  const { spectralCentroid, volume, clarity, dynamicRange, zeroCrossingRate } = metrics
+  const { spectralCentroid, volume, clarity, dynamicRange } = metrics
 
   // スペクトル重心と音量から感情を推定
   let emotion = 'neutral'

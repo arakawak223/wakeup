@@ -245,7 +245,7 @@ export class EnhancedAudioAnalyzer {
     // 問題と推奨事項を分析
     this.analyzeIssuesAndSuggestions(current, issues, suggestions)
 
-    let recommendation = this.getQualityRecommendation(overallScore)
+    const recommendation = this.getQualityRecommendation(overallScore)
 
     return {
       overallScore,

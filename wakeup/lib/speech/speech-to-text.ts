@@ -209,6 +209,18 @@ export class WebSpeechToText implements SpeechToTextManager {
 
     // エラー処理
     this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      // abortedエラーは無視（正常な停止処理）
+      if (event.error === 'aborted') {
+        console.log('音声認識が正常に停止されました')
+        return
+      }
+
+      // no-speechエラーは情報レベルでログ（正常な動作）
+      if (event.error === 'no-speech') {
+        console.log('音声認識: 音声が検出されませんでした')
+        return
+      }
+
       console.error('音声認識エラー:', event.error, event.message)
 
       let errorMessage = '音声認識でエラーが発生しました'

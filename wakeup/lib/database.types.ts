@@ -91,7 +91,7 @@ export interface Database {
         Insert: {
           id?: string
           sender_id: string
-          receiver_id: string
+          receiver_id?: string // オプショナルに変更（デフォルトでsender_idを使用）
           title?: string | null
           audio_url: string
           duration?: number | null
@@ -200,6 +200,37 @@ export interface Database {
           data?: Record<string, unknown> | null
           is_read?: boolean
           created_at?: string
+        }
+      }
+      voice_message_reactions: {
+        Row: {
+          id: string
+          message_id: string
+          user_id: string
+          reaction_type: 'heart' | 'laugh' | 'surprise' | 'sad' | 'angry' | 'thumbs_up' | 'thumbs_down' | 'clap' | 'fire' | 'crying'
+          created_at: string
+          updated_at: string
+          user?: {
+            id: string
+            display_name: string | null
+            email: string
+          }
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          user_id: string
+          reaction_type: 'heart' | 'laugh' | 'surprise' | 'sad' | 'angry' | 'thumbs_up' | 'thumbs_down' | 'clap' | 'fire' | 'crying'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          user_id?: string
+          reaction_type?: 'heart' | 'laugh' | 'surprise' | 'sad' | 'angry' | 'thumbs_up' | 'thumbs_down' | 'clap' | 'fire' | 'crying'
+          created_at?: string
+          updated_at?: string
         }
       }
     }

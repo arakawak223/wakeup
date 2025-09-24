@@ -8,8 +8,9 @@ import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { SupabaseAudioManager } from '@/lib/audio/supabase-audio'
-import { useAuth } from '@/contexts/auth-context'
+import { SupabaseAudioManager, type ReactionType } from '@/lib/audio/supabase-audio'
+import { useAuth } from '@/contexts/hybrid-auth-context'
+import { VoiceMessageReactions, type MessageReaction } from '@/components/messages/voice-message-reactions'
 import type { Database } from '@/lib/database.types'
 
 type VoiceMessage = Database['public']['Tables']['voice_messages']['Row'] & {
@@ -36,6 +37,7 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [readFilter, setReadFilter] = useState<ReadFilter>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [messageReactions, setMessageReactions] = useState<Record<string, MessageReaction[]>>({})
 
   // 音声再生用のref
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -52,12 +54,47 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
       setLoading(true)
       const data = await audioManager.getUserVoiceMessages(user.id, 'received')
       setMessages(data)
+
+      // リアクションも一括取得
+      if (data.length > 0) {
+        loadReactions(data.map(msg => msg.id))
+      }
     } catch (error) {
       console.error('受信メッセージ読み込みエラー:', error)
     } finally {
       setLoading(false)
     }
   }, [audioManager, user])
+
+  // リアクションを読み込み
+  const loadReactions = useCallback(async (messageIds: string[]) => {
+    if (!audioManager || messageIds.length === 0) return
+
+    try {
+      const reactions = await audioManager.getMultipleMessageReactions(messageIds)
+
+      // フォーマットを変換
+      const formattedReactions: Record<string, MessageReaction[]> = {}
+      Object.entries(reactions).forEach(([messageId, reactionList]) => {
+        formattedReactions[messageId] = reactionList.map(r => ({
+          id: r.id,
+          messageId: r.message_id,
+          userId: r.user_id,
+          reactionType: r.reaction_type as ReactionType,
+          createdAt: r.created_at,
+          user: r.user ? {
+            id: r.user.id,
+            displayName: r.user.display_name || undefined,
+            email: r.user.email
+          } : undefined
+        }))
+      })
+
+      setMessageReactions(formattedReactions)
+    } catch (error) {
+      console.error('リアクション読み込みエラー:', error)
+    }
+  }, [audioManager])
 
   // フィルタリング
   useEffect(() => {
@@ -111,6 +148,57 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
   useEffect(() => {
     loadMessages()
   }, [loadMessages])
+
+  // リアクション追加
+  const handleReactionAdd = useCallback(async (messageId: string, reactionType: ReactionType) => {
+    if (!audioManager || !user) return
+
+    try {
+      const newReaction = await audioManager.addReaction(messageId, user.id, reactionType)
+
+      // フォーマットを変換してローカル状態を更新
+      const formattedReaction: MessageReaction = {
+        id: newReaction.id,
+        messageId: newReaction.message_id,
+        userId: newReaction.user_id,
+        reactionType: newReaction.reaction_type as ReactionType,
+        createdAt: newReaction.created_at,
+        user: newReaction.user ? {
+          id: newReaction.user.id,
+          displayName: newReaction.user.display_name || undefined,
+          email: newReaction.user.email
+        } : undefined
+      }
+
+      setMessageReactions(prev => ({
+        ...prev,
+        [messageId]: [...(prev[messageId] || []), formattedReaction]
+      }))
+    } catch (error) {
+      console.error('リアクション追加エラー:', error)
+      alert('リアクションの追加に失敗しました')
+    }
+  }, [audioManager, user])
+
+  // リアクション削除
+  const handleReactionRemove = useCallback(async (messageId: string, reactionType: ReactionType) => {
+    if (!audioManager || !user) return
+
+    try {
+      await audioManager.removeReaction(messageId, user.id, reactionType)
+
+      // ローカル状態を更新
+      setMessageReactions(prev => ({
+        ...prev,
+        [messageId]: (prev[messageId] || []).filter(
+          r => !(r.userId === user.id && r.reactionType === reactionType)
+        )
+      }))
+    } catch (error) {
+      console.error('リアクション削除エラー:', error)
+      alert('リアクションの削除に失敗しました')
+    }
+  }, [audioManager, user])
 
   // 音声再生
   const playAudio = async (message: VoiceMessage) => {
@@ -448,6 +536,17 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
                         <Progress value={playingProgress} className="h-2" />
                       </div>
                     )}
+
+                    {/* リアクション */}
+                    <div className="mt-3">
+                      <VoiceMessageReactions
+                        messageId={message.id}
+                        currentUserId={user.id}
+                        reactions={messageReactions[message.id] || []}
+                        onReactionAdd={handleReactionAdd}
+                        onReactionRemove={handleReactionRemove}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2 min-w-[120px]">

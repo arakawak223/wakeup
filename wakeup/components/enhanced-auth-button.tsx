@@ -8,12 +8,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/contexts/hybrid-auth-context'
 import Link from 'next/link'
 import { useState } from 'react'
 
 export function EnhancedAuthButton() {
-  const { user, profile, signOut, loading } = useAuth()
+  const { user, signOut, loading } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const handleSignOut = async () => {
@@ -48,7 +48,7 @@ export function EnhancedAuthButton() {
     )
   }
 
-  const displayName = profile?.display_name || user.email?.split('@')[0] || 'ユーザー'
+  const displayName = user.name || user.email?.split('@')[0] || 'ユーザー'
 
   return (
     <DropdownMenu>
@@ -81,20 +81,7 @@ export function EnhancedAuthButton() {
 
         <DropdownMenuSeparator />
 
-        {!profile?.display_name && (
-          <>
-            <DropdownMenuItem asChild>
-              <Link href="/profile/setup" className="flex items-center gap-2">
-                <span>⚠️</span>
-                <div>
-                  <div className="font-medium">プロフィール設定</div>
-                  <div className="text-xs text-gray-500">表示名を設定してください</div>
-                </div>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
+        {/* オフラインモードではプロフィール設定をスキップ */}
 
         <DropdownMenuItem asChild>
           <Link href="/profile" className="flex items-center gap-2">

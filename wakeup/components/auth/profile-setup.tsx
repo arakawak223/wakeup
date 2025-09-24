@@ -6,10 +6,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/auth-context'
-import type { User } from '@supabase/supabase-js'
+
+interface HybridUser {
+  id: string
+  email?: string
+  name?: string
+  isOffline?: boolean
+}
 
 interface ProfileSetupProps {
-  user: User
+  user: HybridUser | null
 }
 
 export function ProfileSetup({ user }: ProfileSetupProps) {
@@ -17,6 +23,10 @@ export function ProfileSetup({ user }: ProfileSetupProps) {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { updateProfile, refreshProfile } = useAuth()
+
+  if (!user) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

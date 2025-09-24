@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AccessibilityProvider, AccessibilityControls } from "@/components/accessibility/accessibility-provider";
-import { AuthProvider } from "@/contexts/auth-context";
+import { HybridAuthProvider } from "@/contexts/hybrid-auth-context";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -39,14 +39,19 @@ export const metadata: Metadata = {
     images: ["/og-image.png"]
   },
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
-  colorScheme: "light dark",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "WakeUp"
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#3b82f6",
+  colorScheme: "light dark"
 };
 
 const geistSans = Geist({
@@ -69,12 +74,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
+          <HybridAuthProvider>
             <AccessibilityProvider>
               {children}
               <AccessibilityControls />
             </AccessibilityProvider>
-          </AuthProvider>
+          </HybridAuthProvider>
         </ThemeProvider>
       </body>
     </html>

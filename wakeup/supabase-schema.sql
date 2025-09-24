@@ -96,6 +96,10 @@ CREATE INDEX idx_voice_messages_emotion ON voice_messages(dominant_emotion);
 CREATE INDEX idx_voice_messages_analyzed ON voice_messages(emotion_analyzed_at);
 CREATE INDEX idx_notifications_user ON notifications(user_id);
 CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read);
+CREATE INDEX idx_voice_message_reactions_message ON voice_message_reactions(message_id);
+CREATE INDEX idx_voice_message_reactions_user ON voice_message_reactions(user_id);
+CREATE INDEX idx_voice_message_reactions_type ON voice_message_reactions(reaction_type);
+CREATE INDEX idx_voice_message_reactions_created ON voice_message_reactions(created_at DESC);
 
 -- Row Level Security (RLS) policies
 
@@ -104,6 +108,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE voice_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE voice_message_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
@@ -136,12 +141,44 @@ CREATE POLICY "Users can update messages they received (mark as read)" ON voice_
   USING (auth.uid() = receiver_id);
 
 
--- Notifications policies
-CREATE POLICY "Users can view their notifications" ON notifications FOR SELECT 
+-- Voice message reactions table
+CREATE TABLE voice_message_reactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  message_id UUID REFERENCES voice_messages(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  reaction_type TEXT NOT NULL CHECK (reaction_type IN ('heart', 'laugh', 'surprise', 'sad', 'angry', 'thumbs_up', 'thumbs_down', 'clap', 'fire', 'crying')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(message_id, user_id, reaction_type) -- One reaction type per user per message
+);
+
+-- Voice message reactions policies
+CREATE POLICY "Users can view reactions on messages they can access" ON voice_message_reactions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM voice_messages vm
+      WHERE vm.id = message_id
+      AND (vm.sender_id = auth.uid() OR vm.receiver_id = auth.uid())
+    )
+  );
+CREATE POLICY "Users can add reactions to messages they can access" ON voice_message_reactions FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND EXISTS (
+      SELECT 1 FROM voice_messages vm
+      WHERE vm.id = message_id
+      AND (vm.sender_id = auth.uid() OR vm.receiver_id = auth.uid())
+    )
+  );
+CREATE POLICY "Users can delete their own reactions" ON voice_message_reactions FOR DELETE
   USING (auth.uid() = user_id);
-CREATE POLICY "System can create notifications" ON notifications FOR INSERT 
+
+-- Notifications policies
+CREATE POLICY "Users can view their notifications" ON notifications FOR SELECT
+  USING (auth.uid() = user_id);
+CREATE POLICY "System can create notifications" ON notifications FOR INSERT
   WITH CHECK (TRUE); -- Will be handled by triggers/functions
-CREATE POLICY "Users can update their notifications" ON notifications FOR UPDATE 
+CREATE POLICY "Users can update their notifications" ON notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
 -- Functions for automatic profile creation
@@ -176,4 +213,6 @@ CREATE TRIGGER update_family_connections_updated_at BEFORE UPDATE ON family_conn
 CREATE TRIGGER update_message_requests_updated_at BEFORE UPDATE ON message_requests
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_voice_messages_updated_at BEFORE UPDATE ON voice_messages
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_voice_message_reactions_updated_at BEFORE UPDATE ON voice_message_reactions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

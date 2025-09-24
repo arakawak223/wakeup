@@ -1,21 +1,23 @@
 'use client'
 
-import { AuthProvider, useAuth } from "@/contexts/auth-context"
+import { useState } from 'react'
+import { useAuth } from "@/contexts/hybrid-auth-context"
 import type { User } from '@supabase/supabase-js'
-import { EnhancedLoginForm } from "@/components/auth/enhanced-login-form"
 import { ProfileSetup } from "@/components/auth/profile-setup"
-import { FamilyDashboard } from "@/components/dashboard/family-dashboard"
 import { EnhancedAuthButton } from "@/components/enhanced-auth-button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { VoiceRecorderSupabase } from "@/components/voice-recorder-supabase"
+import { VoiceMessageReceiver } from "@/components/messages/voice-message-receiver"
+import { VoiceRecordingsList } from "@/components/voice-recordings-list"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 
 function TestComponent() {
   console.log('TestComponent rendering...')
 
-  const { user, profile, loading } = useAuth()
-  console.log('Auth state:', { user: !!user, profile: !!profile, loading })
+  const { user, loading, isOfflineMode } = useAuth()
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  console.log('Auth state:', { user: !!user, loading, isOfflineMode })
 
   if (loading) {
     return (
@@ -53,7 +55,32 @@ function TestComponent() {
             </div>
 
             <div className="flex-1 flex items-center justify-center">
-              <EnhancedLoginForm />
+              <div className="w-full max-w-md">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-bold text-center mb-4">
+                    {isOfflineMode ? '📱 オフラインモード' : '☁️ オンラインモード'}
+                  </h2>
+                  <p className="text-sm text-center text-gray-600 mb-4">
+                    {isOfflineMode
+                      ? '現在オフライン認証モードで動作中です'
+                      : 'Supabase認証に接続中です'
+                    }
+                  </p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-500">テスト用ログイン:</p>
+                    <p className="text-xs">メール: test@example.com</p>
+                    <p className="text-xs">パスワード: password123</p>
+                  </div>
+                  <div className="mt-4">
+                    <a
+                      href="/auth/login"
+                      className="w-full bg-blue-600 text-white rounded px-4 py-2 text-center block hover:bg-blue-700"
+                    >
+                      ログインページへ
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* 開発用音声テスト（認証なし） */}
@@ -79,6 +106,7 @@ function TestComponent() {
                       onRecordingComplete={(messageId) => {
                         console.log('開発テスト録音完了:', messageId)
                         alert(`開発テスト録音が完了しました！メッセージID: ${messageId}`)
+                        setRefreshTrigger(prev => prev + 1)
                       }}
                       showQualityMetrics={true}
                       mode="standalone"
@@ -86,6 +114,21 @@ function TestComponent() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* 保存された録音データ一覧（認証なし） */}
+            <div className="mt-8">
+              <VoiceRecordingsList
+                user={{
+                  id: 'test-user',
+                  email: 'test@example.com',
+                  app_metadata: {},
+                  user_metadata: {},
+                  aud: 'authenticated',
+                  created_at: new Date().toISOString()
+                } as User}
+                refreshTrigger={refreshTrigger}
+              />
             </div>
           </div>
 
@@ -107,7 +150,8 @@ function TestComponent() {
     )
   }
 
-  if (!profile?.display_name) {
+  // オフライン認証ではプロフィールセットアップをスキップ
+  if (user && false) {
     return (
       <main className="min-h-screen flex flex-col items-center">
         <div className="flex-1 w-full flex flex-col items-center">
@@ -162,7 +206,15 @@ function TestComponent() {
         </nav>
 
         <div className="flex-1 w-full py-8 space-y-8">
-          <FamilyDashboard user={user} profile={profile} />
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-2">🎉 ログイン成功！</h1>
+              <p className="text-gray-600">
+                ようこそ、{user.name || user.email}さん
+                {user.isOffline ? ' (オフライン)' : ' (オンライン)'}
+              </p>
+            </div>
+          </div>
 
           {/* 音声録音テスト */}
           <div className="max-w-5xl mx-auto px-4">
@@ -172,16 +224,66 @@ function TestComponent() {
               </CardHeader>
               <CardContent>
                 <VoiceRecorderSupabase
-                  user={user}
+                  user={{
+                    id: user.id,
+                    email: user.email,
+                    app_metadata: {},
+                    user_metadata: {},
+                    aud: 'authenticated',
+                    created_at: new Date().toISOString()
+                  } as User}
                   onRecordingComplete={(messageId) => {
                     console.log('録音完了:', messageId)
                     alert(`録音が完了しました！メッセージID: ${messageId}`)
+                    setRefreshTrigger(prev => prev + 1)
                   }}
                   showQualityMetrics={true}
                   mode="standalone"
                 />
               </CardContent>
             </Card>
+          </div>
+
+          {/* 保存された録音データ一覧 */}
+          <div className="max-w-5xl mx-auto px-4">
+            <VoiceRecordingsList
+              user={{
+                id: user.id,
+                email: user.email,
+                app_metadata: {},
+                user_metadata: {},
+                aud: 'authenticated',
+                created_at: new Date().toISOString()
+              } as User}
+              refreshTrigger={refreshTrigger}
+            />
+          </div>
+
+          {/* 家族機能へのリンク */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>👨‍👩‍👧‍👦 家族機能</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    家族との音声メッセージのやり取りをテストできます
+                  </p>
+                  <Link
+                    href="/test-family-messages"
+                    className="inline-block bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
+                  >
+                    家族チャット画面を開く
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 受信メッセージ（リアクション機能付き） */}
+          <div className="max-w-5xl mx-auto px-4">
+            <VoiceMessageReceiver />
           </div>
         </div>
 
@@ -205,11 +307,7 @@ function TestComponent() {
 }
 
 export default function Home() {
-  console.log('Page rendering with AuthProvider...')
+  console.log('Page rendering with OfflineAuthProvider...')
 
-  return (
-    <AuthProvider>
-      <TestComponent />
-    </AuthProvider>
-  )
+  return <TestComponent />
 }

@@ -33,7 +33,7 @@ export class AuthManager {
       // Supabaseセッション確認（タイムアウト付き）
       const sessionPromise = this.supabase.auth.getSession()
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('セッション確認タイムアウト')), 1500)
+        setTimeout(() => reject(new Error('セッション確認タイムアウト')), 300)
       })
 
       let sessionResult

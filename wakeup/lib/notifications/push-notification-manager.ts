@@ -12,7 +12,7 @@ export interface PushNotificationOptions {
   silent?: boolean
   vibrate?: number[]
   actions?: NotificationAction[]
-  data?: any
+  data?: unknown
 }
 
 export interface NotificationSubscriptionInfo {

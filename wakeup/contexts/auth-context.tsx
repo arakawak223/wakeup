@@ -45,13 +45,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     console.log('認証プロバイダー初期化開始')
 
-    // 開発環境では即座にタイムアウトして未ログイン状態にする
+    // 認証確認のタイムアウトを短縮
     const timeout = setTimeout(() => {
       console.log('認証タイムアウト - 未ログイン状態で続行')
       setUser(null)
       setProfile(null)
       setLoading(false)
-    }, 500)
+    }, 100)
 
     // 実際の認証確認は非同期で実行し、結果を待たない
     authManager.getCurrentUserWithProfile()
@@ -75,18 +75,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // 認証状態の変更を監視
   useEffect(() => {
-    const { data: { subscription } } = authManager.onAuthStateChange((newUser, newProfile) => {
-      setUser(newUser)
-      setProfile(newProfile || null)
-      setLoading(false)
-    })
+    const setupAuthListener = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
 
-    return () => subscription.unsubscribe()
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+        console.log('🔑 認証状態変更:', event, !!session?.user)
+
+        const user = session?.user || null
+
+        if (user) {
+          // ユーザーがログインしている場合、プロフィール情報を取得
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single()
+
+            setUser(user)
+            setProfile(profile || null)
+            setLoading(false)
+          } catch (error) {
+            console.log('🔑 プロフィール取得エラー:', error)
+            setUser(user)
+            setProfile(null)
+            setLoading(false)
+          }
+        } else {
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        }
+      })
+
+      return subscription
+    }
+
+    const subscription = setupAuthListener()
+    return () => {
+      subscription.then(sub => sub.unsubscribe())
+    }
   }, [])
 
   // サインイン
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
+      console.log('🔑 ログイン開始:', email)
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
 
@@ -95,27 +130,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password
       })
 
+      console.log('🔑 ログイン結果:', { data: !!data.user, error: error?.message })
+
       if (error) {
+        console.error('🔑 ログインエラー:', error)
         return {
           success: false,
           error: authManager.translateAuthError({ message: error.message, code: error.name })
         }
       }
 
-      // プロフィール情報を取得
+      // プロフィール情報を非同期で取得（ブロックしない）
       if (data.user) {
-        const { data: profile } = await supabase
+        console.log('🔑 ユーザー認証成功 - 状態更新中:', data.user.id)
+        setUser(data.user)
+        setLoading(false)
+
+        // プロフィール取得は非同期で実行してログインをブロックしない
+        supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single()
-
-        setUser(data.user)
-        setProfile(profile || null)
+          .then((result: any) => {
+            console.log('🔑 プロフィール取得完了:', !!result.data)
+            setProfile(result.data || null)
+          })
+          .catch((error: any) => {
+            console.log('🔑 プロフィール取得失敗:', error.message)
+            setProfile(null)
+          })
       }
 
       return { success: true, user: data.user }
     } catch (error) {
+      console.error('🔑 ログイン例外:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'ログインに失敗しました'
