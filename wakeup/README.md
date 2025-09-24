@@ -1,105 +1,256 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# 🎙️ Wakeup - エンタープライズグレード音声メッセージプラットフォーム
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.3-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18+-61DAFB)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Real--time-green)](https://supabase.io/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)](https://www.docker.com/)
+[![PWA](https://img.shields.io/badge/PWA-Enabled-purple)](https://web.dev/progressive-web-apps/)
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+**家族の絆を深める音声メッセージプラットフォーム - 最先端のセキュリティとアクセシビリティを備えたエンタープライズソリューション**
 
-## Features
+## 🌟 主要機能
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### 🎵 音声処理機能
+- **高品質音声録音**: Web Audio API を使用した48kHz/16bit録音
+- **リアルタイム音声可視化**: 6種類の可視化モード（波形、周波数、3D等）
+- **音響効果処理**: リバーブ、エコー、コーラス、フィルター効果
+- **自動マイクテスト**: 音質診断と環境最適化提案
+- **音声圧縮最適化**: 高品質でファイルサイズを最小化
 
-## Demo
+### 🔐 セキュリティ・プライバシー
+- **エンドツーエンド暗号化**: RSA-4096 + AES-256暗号化
+- **GDPR/CCPA準拠**: 完全なプライバシー保護
+- **デジタル署名**: メッセージの完全性保証
+- **プライバシーコントロール**: きめ細かい権限設定
+- **データ暗号化**: 保存時・転送時の完全暗号化
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### 🚀 リアルタイム・コラボレーション
+- **マルチユーザー対応**: Supabaseリアルタイム通信
+- **同期録音・再生**: 複数参加者での同時操作
+- **プレゼンス機能**: オンラインユーザー表示
+- **リアルタイム通知**: 瞬時のメッセージ配信
+- **共同編集**: 音声メッセージの協調作業
 
-## Deploy to Vercel
+### ♿ アクセシビリティ
+- **WCAG 2.1 AA準拠**: 完全なアクセシビリティ対応
+- **スクリーンリーダー対応**: 音声読み上げ最適化
+- **キーボードナビゲーション**: マウス不要の完全操作
+- **フォーカス管理**: 直感的なUI操作
+- **多言語対応**: 国際化対応
 
-Vercel deployment will guide you through creating a Supabase account and project.
+### ⚡ パフォーマンス
+- **Service Worker**: オフライン対応とキャッシング
+- **Progressive Web App**: ネイティブアプリ体験
+- **Core Web Vitals**: 最適化されたUX指標
+- **レイジーローディング**: 必要時のみリソース読み込み
+- **メモリ管理**: 効率的なリソース使用
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 🏗️ 技術スタック
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+### フロントエンド
+- **Next.js 15.5.3**: フルスタックReactフレームワーク
+- **TypeScript**: 型安全な開発環境
+- **Tailwind CSS**: ユーティリティファーストCSS
+- **Radix UI**: アクセシブルなUI primitives
+- **Lucide React**: 美しいアイコンライブラリ
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+### バックエンド・データベース
+- **Supabase**: PostgreSQL + リアルタイム機能
+- **Web Audio API**: 高度な音声処理
+- **IndexedDB**: クライアントサイドデータ保存
+- **Service Worker**: オフライン機能とキャッシング
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### 開発・運用
+- **Jest + React Testing Library**: 包括的テストスイート
+- **GitHub Actions**: CI/CD パイプライン
+- **Docker**: コンテナ化deployment
+- **Nginx**: リバースプロキシとロードバランシング
 
-## Clone and run locally
+## 🚀 クイックスタート
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+### 前提条件
+- Node.js 18+
+- npm または yarn
+- Docker (本番環境用)
+- Supabase プロジェクト
 
-2. Create a Next.js app using the Supabase Starter template npx command
+### 開発環境セットアップ
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+1. **リポジトリをクローン**
+```bash
+git clone <repository-url>
+cd wakeup
+```
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+2. **依存関係をインストール**
+```bash
+npm install
+```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+3. **環境変数を設定**
+```bash
+cp .env.example .env.local
+# .env.local を編集してSupabase認証情報を設定
+```
 
-3. Use `cd` to change into the app's directory
+4. **開発サーバーを起動**
+```bash
+npm run dev
+```
 
-   ```bash
-   cd with-supabase-app
-   ```
+5. **ブラウザでアクセス**
+```
+http://localhost:3000
+```
 
-4. Rename `.env.example` to `.env.local` and update the following:
+### プロダクション展開
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+1. **環境変数を設定**
+```bash
+cp .env.production.example .env.production
+# 本番環境の認証情報を設定
+```
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+2. **Docker Composeで展開**
+```bash
+./scripts/deploy.sh
+```
 
-5. You can now run the Next.js local development server:
+3. **アクセス確認**
+```
+https://localhost (SSL対応)
+```
 
-   ```bash
-   npm run dev
-   ```
+## 📱 主要画面
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+### 🏠 ホーム画面
+- 音声録音・再生の中央制御
+- クイックアクセス機能群
+- リアルタイムユーザー状態
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+### 🎤 録音・再生画面
+- 高品質音声録音インターフェース
+- リアルタイム音声可視化
+- 録音コントロールとプレビュー
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+### 👥 コラボレーション画面
+- マルチユーザー音声セッション
+- リアルタイム参加者表示
+- 同期録音・再生機能
 
-## Feedback and issues
+### 🔒 セキュリティ管理画面
+- 暗号化設定とキー管理
+- プライバシー設定コントロール
+- データ保護状態監視
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+### ♿ アクセシビリティ画面
+- 支援技術設定
+- カスタマイゼーション オプション
+- ユーザビリティ調整
 
-## More Supabase examples
+### 📊 パフォーマンス監視画面
+- Core Web Vitals メトリクス
+- リソース使用状況監視
+- パフォーマンス最適化提案
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+## 🧪 テスト
+
+### 全テスト実行
+```bash
+npm test
+```
+
+### カバレッジ付きテスト
+```bash
+npm run test:coverage
+```
+
+### 統合テスト
+```bash
+npm run test:integration
+```
+
+### アクセシビリティテスト
+```bash
+npm run test:a11y
+```
+
+## 📋 使用可能なスクリプト
+
+### 開発
+- `npm run dev` - 開発サーバー起動
+- `npm run build` - プロダクションビルド
+- `npm run start` - プロダクションサーバー起動
+- `npm run lint` - ESLintによるコード検査
+- `npm run type-check` - TypeScript型チェック
+
+### テスト
+- `npm test` - テスト実行
+- `npm run test:watch` - ウォッチモードでテスト
+- `npm run test:coverage` - カバレッジレポート生成
+
+### 運用
+- `./scripts/deploy.sh` - プロダクション展開
+- `docker-compose up` - 開発環境Docker起動
+- `docker-compose -f docker-compose.production.yml up` - 本番環境起動
+
+## 🏗️ アーキテクチャ
+
+```
+/wakeup
+├── app/                     # Next.js App Router
+│   ├── page.tsx            # ホーム画面
+│   ├── collaboration/      # リアルタイムコラボレーション
+│   ├── security/          # セキュリティ管理
+│   ├── accessibility/     # アクセシビリティ設定
+│   └── performance/       # パフォーマンス監視
+├── components/             # Reactコンポーネント
+│   ├── audio/             # 音声関連コンポーネント
+│   ├── collaboration/     # コラボレーション機能
+│   ├── security/          # セキュリティ機能
+│   ├── accessibility/     # アクセシビリティ機能
+│   └── ui/                # 基本UIコンポーネント
+├── lib/                   # ユーティリティライブラリ
+│   ├── audio/             # 音声処理ライブラリ
+│   ├── security/          # セキュリティ・暗号化
+│   ├── realtime/          # リアルタイム通信
+│   ├── accessibility/     # アクセシビリティ支援
+│   └── performance/       # パフォーマンス最適化
+├── contexts/              # React Context
+├── hooks/                 # カスタムフック
+├── __tests__/             # テストファイル
+├── public/                # 静的アセット
+├── nginx/                 # Nginx設定
+└── scripts/               # デプロイメントスクリプト
+```
+
+## 🔧 使用可能なスクリプト
+
+- **開発用コマンド**
+  - `npm run dev` - 開発サーバー起動
+  - `npm run build` - プロダクションビルド
+  - `npm run start` - プロダクションサーバー起動
+  - `npm run lint` - コード検査
+  - `npm run type-check` - 型チェック
+
+- **テスト用コマンド**
+  - `npm test` - テスト実行
+  - `npm run test:coverage` - カバレッジ付きテスト
+
+## 🛠️ 環境設定
+
+環境変数は `.env.local` ファイルで設定してください：
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 📝 ライセンス
+
+MIT License
+
+---
+
+**🎙️ Wakeup - 家族の声を、安全に、美しく繋げる**

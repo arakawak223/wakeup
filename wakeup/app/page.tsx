@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from "@/contexts/hybrid-auth-context"
 import type { User } from '@supabase/supabase-js'
+import { initializePerformanceOptimizations } from "@/lib/performance/lazy-loading"
 import { ProfileSetup } from "@/components/auth/profile-setup"
 import { EnhancedAuthButton } from "@/components/enhanced-auth-button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 import { VoiceRecorderSupabase } from "@/components/voice-recorder-supabase"
 import { VoiceMessageReceiver } from "@/components/messages/voice-message-receiver"
 import { VoiceRecordingsList } from "@/components/voice-recordings-list"
+import { MicrophoneTest } from "@/components/audio/microphone-test"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 
@@ -18,6 +20,11 @@ function TestComponent() {
   const { user, loading, isOfflineMode } = useAuth()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   console.log('Auth state:', { user: !!user, loading, isOfflineMode })
+
+  // パフォーマンス最適化の初期化
+  useEffect(() => {
+    initializePerformanceOptimizations()
+  }, [])
 
   if (loading) {
     return (
@@ -81,6 +88,15 @@ function TestComponent() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* マイクテスト機能（認証なし） */}
+            <div className="mt-8">
+              <MicrophoneTest
+                onTestComplete={(result) => {
+                  console.log('マイクテスト完了:', result)
+                }}
+              />
             </div>
 
             {/* 開発用音声テスト（認証なし） */}
@@ -216,6 +232,15 @@ function TestComponent() {
             </div>
           </div>
 
+          {/* マイクテスト */}
+          <div className="max-w-5xl mx-auto px-4">
+            <MicrophoneTest
+              onTestComplete={(result) => {
+                console.log('認証済みユーザー マイクテスト完了:', result)
+              }}
+            />
+          </div>
+
           {/* 音声録音テスト */}
           <div className="max-w-5xl mx-auto px-4">
             <Card>
@@ -275,6 +300,203 @@ function TestComponent() {
                     className="inline-block bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
                   >
                     家族チャット画面を開く
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* リアルタイム音声コラボレーション */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>🎙️ リアルタイムコラボレーション</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    複数人での音声メッセージリアルタイムコラボレーション機能です。
+                    音声録音、即座の配信、参加者の表示機能が利用できます。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">✨ 主な機能:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• リアルタイム音声メッセージ配信</li>
+                      <li>• 参加者のオンライン状況表示</li>
+                      <li>• 録音中インジケーター</li>
+                      <li>• 音声テキスト変換機能</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/collaboration"
+                    className="inline-block bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700"
+                  >
+                    コラボレーション画面を開く
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* アクセシビリティ機能デモ */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>♿ アクセシビリティ機能</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    全ての人が利用できる音声メッセージ機能を体験してください。
+                    WCAG 2.1準拠のアクセシビリティ機能が実装されています。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">🌟 主要機能:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• フルキーボード操作対応</li>
+                      <li>• スクリーンリーダー完全対応</li>
+                      <li>• 高コントラストデザイン</li>
+                      <li>• リアルタイム文字起こし</li>
+                      <li>• アクセシビリティ自動チェック機能</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/accessibility"
+                    className="inline-block bg-purple-600 text-white rounded px-4 py-2 hover:bg-purple-700"
+                  >
+                    アクセシビリティデモを体験
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* パフォーマンス監視 */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>📊 パフォーマンス監視</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    アプリケーションのリアルタイムパフォーマンス監視とWeb Vitals測定。
+                    Core Web Vitals、メモリ使用量、ネットワーク性能を包括的に監視します。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">📈 監視項目:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• Core Web Vitals (LCP, FID, CLS)</li>
+                      <li>• メモリ使用量とリソース監視</li>
+                      <li>• ネットワーク遅延とキャッシュ効率</li>
+                      <li>• Service Worker動作状況</li>
+                      <li>• リアルタイムメトリクス収集</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/performance"
+                    className="inline-block bg-indigo-600 text-white rounded px-4 py-2 hover:bg-indigo-700"
+                  >
+                    パフォーマンス監視を開く
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* セキュリティ・プライバシー管理 */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>🔒 セキュリティ・プライバシー</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    エンタープライズレベルのセキュリティ機能とGDPR/CCPA準拠のプライバシー管理。
+                    エンドツーエンド暗号化、脅威検出、データ保護を包括的に提供します。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">🛡️ セキュリティ機能:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• エンドツーエンド暗号化（RSA-4096 + AES-256）</li>
+                      <li>• リアルタイム脅威検出・監視</li>
+                      <li>• GDPR/CCPA準拠のプライバシー管理</li>
+                      <li>• データ主体の権利対応（削除・ポータビリティ）</li>
+                      <li>• セキュリティ監査ログ</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/security"
+                    className="inline-block bg-red-600 text-white rounded px-4 py-2 hover:bg-red-700"
+                  >
+                    セキュリティ管理を開く
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* プログレッシブ・エンハンスメント */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>⚡ プログレッシブ・エンハンスメント</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    ブラウザ機能に応じた段階的機能向上システム。基本機能から高度な機能まで、
+                    ユーザーの環境に最適化された体験を提供します。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">🎯 適応機能:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• ブラウザ機能自動検出</li>
+                      <li>• 段階的機能向上（Progressive Enhancement）</li>
+                      <li>• フォールバック機能自動提供</li>
+                      <li>• クロスブラウザ互換性保証</li>
+                      <li>• パフォーマンス最適化</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/progressive"
+                    className="inline-block bg-purple-600 text-white rounded px-4 py-2 hover:bg-purple-700"
+                  >
+                    プログレッシブ機能を体験
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* プロダクション監視システム */}
+          <div className="max-w-5xl mx-auto px-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>📊 プロダクション監視</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    包括的なプロダクション監視システム。パフォーマンス、エラー、ユーザー行動、
+                    セキュリティイベントをリアルタイムで監視・分析します。
+                  </p>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">🔍 監視項目:</h4>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      <li>• Core Web Vitals & パフォーマンス指標</li>
+                      <li>• JavaScriptエラー・例外追跡</li>
+                      <li>• ユーザーセッション・行動分析</li>
+                      <li>• セキュリティイベント監視</li>
+                      <li>• リアルタイムログ収集</li>
+                    </ul>
+                  </div>
+                  <Link
+                    href="/monitoring"
+                    className="inline-block bg-indigo-600 text-white rounded px-4 py-2 hover:bg-indigo-700"
+                  >
+                    監視ダッシュボードを開く
                   </Link>
                 </div>
               </CardContent>

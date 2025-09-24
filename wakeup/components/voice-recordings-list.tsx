@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,7 +32,7 @@ export function VoiceRecordingsList({ user, refreshTrigger }: VoiceRecordingsLis
   const [playingId, setPlayingId] = useState<string | null>(null)
 
   // 録音データを取得
-  const loadRecordings = async () => {
+  const loadRecordings = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -93,12 +93,12 @@ export function VoiceRecordingsList({ user, refreshTrigger }: VoiceRecordingsLis
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id])
 
   // 初回読み込みとリフレッシュトリガー
   useEffect(() => {
     loadRecordings()
-  }, [user.id, refreshTrigger])
+  }, [user.id, refreshTrigger, loadRecordings])
 
   // 音声再生処理
   const playAudio = async (audioUrl: string, messageId: string) => {

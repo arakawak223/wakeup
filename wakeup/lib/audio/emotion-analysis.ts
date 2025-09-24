@@ -138,7 +138,7 @@ export class EmotionAnalyzer {
 
       // 結果を構築
       const dominantEmotion = Object.keys(emotionScores).reduce((a, b) =>
-        emotionScores[a] > emotionScores[b] ? a : b
+        emotionScores[a as keyof typeof emotionScores] > emotionScores[b as keyof typeof emotionScores] ? a : b
       )
 
       const confidence = this.computeConfidence(emotionScores, features)
@@ -648,7 +648,7 @@ export class EmotionAnalyzer {
     const magnitude = spectrum.map(complex => Math.sqrt(complex.real * complex.real + complex.imag * complex.imag))
 
     // メルフィルターバンクを適用（簡略化）
-    const melFiltered = this.applyMelFilterBank(magnitude, sampleRate)
+    const melFiltered = this.applyMelFilterBank(magnitude)
 
     // DCT変換（簡略化）
     const mfcc: number[] = []

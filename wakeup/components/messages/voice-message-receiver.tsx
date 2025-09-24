@@ -64,7 +64,7 @@ export function VoiceMessageReceiver({ className }: VoiceMessageReceiverProps) {
     } finally {
       setLoading(false)
     }
-  }, [audioManager, user])
+  }, [audioManager, user]) // loadReactions is stable and defined later
 
   // リアクションを読み込み
   const loadReactions = useCallback(async (messageIds: string[]) => {

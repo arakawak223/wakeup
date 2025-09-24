@@ -182,7 +182,7 @@ export class SupabaseAudioManager {
         duration: messageData.duration,
         category: messageData.category,
         request_id: messageData.requestId,
-        audio_metadata: messageData.audioMetadata as Record<string, unknown> | null,
+        audio_metadata: messageData.audioMetadata ? messageData.audioMetadata as unknown as Record<string, unknown> : null,
         emotion_analysis: messageData.emotionAnalysis as Record<string, unknown> | null
       }
 

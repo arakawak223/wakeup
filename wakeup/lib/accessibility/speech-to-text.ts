@@ -18,20 +18,8 @@ export interface SpeechToTextOptions {
   grammars?: string[]
 }
 
-// Web Speech API basic interface
-interface SpeechRecognitionInterface {
-  start(): void
-  stop(): void
-  onresult: ((event: unknown) => void) | null
-  onerror: ((event: unknown) => void) | null
-  onend: (() => void) | null
-  continuous: boolean
-  lang: string
-  maxAlternatives: number
-}
-
 export class SpeechToTextService {
-  private recognition: SpeechRecognitionInterface | null = null
+  private recognition: SpeechRecognition | null = null
   private isListening = false
   private options: SpeechToTextOptions = {}
   private onResult?: (result: SpeechRecognitionResult) => void
@@ -59,19 +47,21 @@ export class SpeechToTextService {
       return false
     }
 
-    const SpeechRecognition = (window as typeof window & { SpeechRecognition: typeof SpeechRecognition; webkitSpeechRecognition: typeof SpeechRecognition }).SpeechRecognition || (window as typeof window & { SpeechRecognition: typeof SpeechRecognition; webkitSpeechRecognition: typeof SpeechRecognition }).webkitSpeechRecognition
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition
 
-    this.recognition = new SpeechRecognition()
-    this.recognition.lang = this.options.language || 'ja-JP'
-    this.recognition.continuous = this.options.continuous || true
-    this.recognition.interimResults = this.options.interimResults || true
-    this.recognition.maxAlternatives = this.options.maxAlternatives || 1
+    this.recognition = new SpeechRecognitionClass()
+    if (this.recognition) {
+      this.recognition.lang = this.options.language || 'ja-JP'
+      this.recognition.continuous = this.options.continuous || true
+      this.recognition.interimResults = this.options.interimResults || true
+      this.recognition.maxAlternatives = this.options.maxAlternatives || 1
 
-    // イベントリスナーの設定
-    this.recognition.onresult = this.handleResult.bind(this)
-    this.recognition.onerror = this.handleError.bind(this)
-    this.recognition.onend = this.handleEnd.bind(this)
-    this.recognition.onstart = this.handleStart.bind(this)
+      // イベントリスナーの設定
+      this.recognition.onresult = this.handleResult.bind(this)
+      this.recognition.onerror = this.handleError.bind(this)
+      this.recognition.onend = this.handleEnd.bind(this)
+      this.recognition.onstart = this.handleStart.bind(this)
+    }
 
     return true
   }

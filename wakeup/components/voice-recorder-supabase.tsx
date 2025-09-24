@@ -13,7 +13,9 @@ import { AudioAnalyzer, type AudioMetrics } from '@/lib/audio/audio-analyzer'
 import { EnhancedAudioAnalyzer, type EnhancedAudioMetrics } from '@/lib/audio/enhanced-audio-analyzer'
 import { EmotionVisualization } from '@/components/audio/emotion-visualization'
 import { InlineSpeechToText } from '@/components/speech/speech-to-text-display'
+import { AudioVisualizer } from '@/components/audio/audio-visualizer'
 import { AudioCompressor, type CompressionResult } from '@/lib/audio/audio-compression'
+import { AudioEffectsProcessor, type AudioEffectOptions } from '@/lib/audio/audio-effects'
 import { generateDummyAudioBlob } from '@/lib/dummy-audio'
 import { isDevMode } from '@/lib/dev-mode'
 import type { User } from '@supabase/supabase-js'
@@ -71,6 +73,13 @@ export function VoiceRecorderSupabase({
   const [showEmotionAnalysis] = useState(true)
   const [showSpeechToText] = useState(true)
   const [, setRecognizedText] = useState('')
+
+  // Advanced audio features
+  const [showVisualizer, setShowVisualizer] = useState(false)
+  const [showEffects, setShowEffects] = useState(false)
+  const [selectedPreset, setSelectedPreset] = useState('clean')
+  const [effectsProcessor] = useState(() => new AudioEffectsProcessor())
+  const [processedStream, setProcessedStream] = useState<MediaStream | null>(null)
 
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -231,6 +240,25 @@ export function VoiceRecorderSupabase({
 
       streamRef.current = stream
 
+      // エフェクト処理の適用
+      let recordingStream = stream
+      if (selectedPreset !== 'clean') {
+        try {
+          const presets = AudioEffectsProcessor.getPresets()
+          const effectOptions = presets[selectedPreset as keyof typeof presets]
+          if (effectOptions) {
+            const processed = await effectsProcessor.processAudioStream(stream, effectOptions)
+            if (processed) {
+              recordingStream = processed
+              setProcessedStream(processed)
+              console.log(`エフェクト "${selectedPreset}" を適用しました`)
+            }
+          }
+        } catch (error) {
+          console.warn('エフェクト処理エラー:', error)
+        }
+      }
+
       // 音声分析の開始
       if (showQualityMetrics) {
         audioAnalyzerRef.current = new AudioAnalyzer()
@@ -269,7 +297,7 @@ export function VoiceRecorderSupabase({
       console.log('使用する音声形式:', finalFormat)
       setAudioFormat(finalFormat)
 
-      const mediaRecorder = new MediaRecorder(stream, options)
+      const mediaRecorder = new MediaRecorder(recordingStream, options)
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
@@ -778,6 +806,63 @@ export function VoiceRecorderSupabase({
             )}
           </div>
         )}
+
+        {/* Advanced Audio Features */}
+        <div className="space-y-3 border-t pt-3">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={showVisualizer ? "default" : "outline"}
+              onClick={() => setShowVisualizer(!showVisualizer)}
+            >
+              📊 視覚化
+            </Button>
+            <Button
+              size="sm"
+              variant={showEffects ? "default" : "outline"}
+              onClick={() => setShowEffects(!showEffects)}
+            >
+              🎛️ エフェクト
+            </Button>
+          </div>
+
+          {/* Audio Visualizer */}
+          {showVisualizer && (
+            <AudioVisualizer
+              audioStream={streamRef.current}
+              isRecording={isRecording}
+              className="mt-2"
+            />
+          )}
+
+          {/* Audio Effects */}
+          {showEffects && (
+            <div className="space-y-2">
+              <Label>エフェクトプリセット</Label>
+              <Select
+                value={selectedPreset}
+                onValueChange={setSelectedPreset}
+                disabled={isRecording}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(AudioEffectsProcessor.getPresets()).map(([key]) => (
+                    <SelectItem key={key} value={key}>
+                      {key === 'clean' && 'クリーン'}
+                      {key === 'warmth' && '暖かみ'}
+                      {key === 'radio' && 'ラジオ'}
+                      {key === 'cathedral' && '大聖堂'}
+                      {key === 'telephone' && '電話'}
+                      {key === 'space' && '宇宙'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
 
         {/* 録音ボタン */}
         <div className="flex gap-2">

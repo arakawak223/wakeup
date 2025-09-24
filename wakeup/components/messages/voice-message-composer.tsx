@@ -232,7 +232,7 @@ export function VoiceMessageComposer({
     emotionResult,
     onMessageSent,
     supabase
-  ])
+  ]) // handleReset is called after message sent, no need to include in deps
 
   /**
    * リセット処理
