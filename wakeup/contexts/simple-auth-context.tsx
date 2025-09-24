@@ -29,16 +29,16 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
     const supabase = createClient()
 
     // 初期認証状態の確認
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
-    }).catch((error) => {
+    }).catch((error: any) => {
       console.error('🔑 セッション取得エラー:', error)
       setLoading(false)
     })
 
     // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
       console.log('🔑 認証状態変更:', _event, !!session?.user)
       setUser(session?.user ?? null)
       setLoading(false)

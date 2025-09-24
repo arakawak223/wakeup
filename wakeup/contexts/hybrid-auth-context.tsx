@@ -110,7 +110,7 @@ export function HybridAuthProvider({ children }: { children: React.ReactNode }) 
     try {
       const supabase = createClient()
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
+        async (event: string, session: any) => {
           console.log('🔑 Supabase認証状態変更:', event, !!session?.user)
 
           if (session?.user) {

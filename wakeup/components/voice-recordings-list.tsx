@@ -50,7 +50,7 @@ export function VoiceRecordingsList({ user, refreshTrigger }: VoiceRecordingsLis
           console.log('📱 ローカルデータ件数:', parsed.length)
 
           // ユーザー関連メッセージをフィルタリング
-          const userMessages = parsed.filter((msg: any) =>
+          const userMessages = parsed.filter((msg: VoiceMessage) =>
             msg.sender_id === user.id || msg.receiver_id === user.id
           )
           console.log('📱 ユーザー関連メッセージ:', userMessages)
@@ -58,7 +58,7 @@ export function VoiceRecordingsList({ user, refreshTrigger }: VoiceRecordingsLis
           // ローカルストレージに有効なデータがある場合はそれを使用
           if (userMessages.length > 0) {
             console.log('✅ ローカルストレージからデータを取得しました')
-            setRecordings(userMessages.map((msg: any) => ({
+            setRecordings(userMessages.map((msg: VoiceMessage) => ({
               ...msg,
               audio_metadata: msg.audio_metadata as Record<string, unknown> | null,
               emotion_analysis: null,
@@ -264,8 +264,8 @@ export function VoiceRecordingsList({ user, refreshTrigger }: VoiceRecordingsLis
                       <div>📅 {new Date(recording.created_at).toLocaleString('ja-JP')}</div>
                       {recording.audio_metadata && (
                         <>
-                          <div>📦 {formatFileSize((recording.audio_metadata as any)?.size || 0)}</div>
-                          <div>🎵 {(recording.audio_metadata as any)?.format || '不明'}</div>
+                          <div>📦 {formatFileSize((recording.audio_metadata as Record<string, unknown>)?.size as number || 0)}</div>
+                          <div>🎵 {(recording.audio_metadata as Record<string, unknown>)?.format as string || '不明'}</div>
                         </>
                       )}
                     </div>
