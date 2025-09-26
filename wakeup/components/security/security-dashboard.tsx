@@ -6,8 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useE2EEncryption } from '@/lib/security/encryption'
-import { usePrivacyManager } from '@/lib/security/privacy-manager'
+import { useE2EEncryption } from '@/hooks/use-encryption'
+import { usePrivacyManager } from '@/hooks/use-privacy-manager'
 import {
   Shield,
   ShieldCheck,

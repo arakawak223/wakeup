@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AccessibilityProvider, AccessibilityControls } from "@/components/accessibility/accessibility-provider";
 import { HybridAuthProvider } from "@/contexts/hybrid-auth-context";
+import { PWAProvider } from "@/components/pwa/pwa-provider";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -68,19 +69,21 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <HybridAuthProvider>
-            <AccessibilityProvider>
-              {children}
-              <AccessibilityControls />
-            </AccessibilityProvider>
-          </HybridAuthProvider>
-        </ThemeProvider>
+        <PWAProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <HybridAuthProvider>
+              <AccessibilityProvider>
+                {children}
+                <AccessibilityControls />
+              </AccessibilityProvider>
+            </HybridAuthProvider>
+          </ThemeProvider>
+        </PWAProvider>
       </body>
     </html>
   );

@@ -1,18 +1,35 @@
-# 🚀 Wakeup - 本番環境展開ガイド
+# 🚀 WakeUp アプリケーション - 本番環境デプロイメントガイド
 
-## 📋 展開前チェックリスト
+## 📋 本番デプロイ完了状況
 
-### ✅ 必要な環境変数
+### ✅ 設定完了項目
+
+- [x] **セキュリティ強化**: RSA-4096 + AES-256暗号化、CSRF保護、レート制限
+- [x] **本番環境変数**: セキュリティソルト、VAPIDキー生成済み
+- [x] **Docker設定**: 最適化されたmulti-stage Dockerfile
+- [x] **Nginx設定**: SSL/TLS、セキュリティヘッダー、レート制限
+- [x] **監視システム**: Prometheus, Grafana, AlertManager設定
+- [x] **セキュリティテスト**: 包括的テストスクリプト作成済み
+
+### 🔧 生成済み本番環境変数
 ```bash
-# 必須設定項目
-NEXT_PUBLIC_SUPABASE_URL          # Supabaseプロジェクトurl
-NEXT_PUBLIC_SUPABASE_ANON_KEY     # Supabase認証キー
-SUPABASE_SECRET_KEY               # Supabaseサービスキー
+# セキュリティ設定（生成済み）
+SECURITY_SALT=9dad1ac0237d32240b59828a5d93c2f92c6e4b864b95f64218ba40efc344820b
+STRICT_IP_VALIDATION=true
 
-# オプション設定
-NEXTAUTH_SECRET                   # 認証シークレット
-NEXTAUTH_URL                      # 認証ベースURL
-LOG_LEVEL                         # ログレベル (warn推奨)
+# VAPID Keys（プッシュ通知用・生成済み）
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=BHzA0NNHf0evHlRSakn4kZBnVgeoAyfAUCvTpe3DkzjB5XnR111VK2GjX0Kt2L7RAiFjsaPAY7nWs43avihAADQ
+VAPID_PRIVATE_KEY=BmNj1me24SnpsRezZ4ls-OUU27u0rCkCXFbRP0cLGn4
+VAPID_SUBJECT=mailto:your-email@domain.com
+
+# Supabase設定（要編集）
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SECRET_KEY=your-supabase-secret-key
+
+# サイト設定
+NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+NEXT_PUBLIC_APP_DOMAIN=yourdomain.com
 ```
 
 ### ✅ システム要件

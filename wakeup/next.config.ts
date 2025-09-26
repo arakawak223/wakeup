@@ -15,7 +15,14 @@ const nextConfig: NextConfig = {
 
   // パフォーマンス最適化
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', 'lucide-react'],
+    optimizePackageImports: [
+      '@supabase/supabase-js',
+      'lucide-react',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tabs',
+      'date-fns'
+    ],
   },
 
 

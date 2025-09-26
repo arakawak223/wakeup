@@ -1,0 +1,121 @@
+groups:
+  - name: wakeup_app_alerts
+    rules:
+      # アプリケーション監視
+      - alert: AppDown
+        expr: up{job="wakeup-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WakeUp アプリケーションが停止"
+          description: "WakeUp アプリケーションが {{ $value }} 分間応答していません。"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "高いレスポンス時間"
+          description: "95%のリクエストが2秒以上かかっています。"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "高いエラー率"
+          description: "エラー率が5%を超えています: {{ $value }}%"
+
+      # メモリ使用量
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / (1024 * 1024 * 1024)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "高メモリ使用量"
+          description: "アプリケーションが {{ $value }}GB のメモリを使用しています。"
+
+  - name: system_alerts
+    rules:
+      # システムリソース監視
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "高CPU使用率"
+          description: "CPU使用率が80%を超えています: {{ $value }}%"
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"} > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ディスク容量不足"
+          description: "ディスク使用率が85%を超えています。"
+
+      - alert: HighMemoryUsageSystem
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "システムメモリ不足"
+          description: "システムメモリ使用率が90%を超えています。"
+
+  - name: redis_alerts
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis サーバーが停止"
+          description: "Redis サーバーが応答していません。"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis メモリ使用量が高い"
+          description: "Redis のメモリ使用率が80%を超えています。"
+
+  - name: security_alerts
+    rules:
+      - alert: TooManyFailedLogins
+        expr: increase(failed_login_attempts_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ログイン試行失敗が多数"
+          description: "5分間で10回以上のログイン失敗が発生しています。"
+
+      - alert: SuspiciousActivity
+        expr: increase(security_events_total{severity="critical"}[1m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "重大なセキュリティイベント発生"
+          description: "クリティカルなセキュリティイベントが検出されました。"
+
+  - name: ssl_certificate_alerts
+    rules:
+      - alert: SSLCertificateExpiry
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 7
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL証明書の有効期限が近づいています"
+          description: "SSL証明書が {{ $value }} 日後に期限切れになります。"

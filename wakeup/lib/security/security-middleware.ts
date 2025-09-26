@@ -4,10 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import rateLimit from 'express-rate-limit'
-import slowDown from 'express-slow-down'
-import helmet from 'helmet'
-import { createHash, randomBytes } from 'crypto'
+// Web Crypto API for Edge runtime compatibility
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -56,14 +53,20 @@ const sessionStore = new Map<string, {
  * Generate secure session token
  */
 export function generateSessionToken(): string {
-  return randomBytes(32).toString('hex')
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /**
  * Hash IP address for privacy
  */
-export function hashIP(ip: string): string {
-  return createHash('sha256').update(ip + process.env.SECURITY_SALT || '').digest('hex')
+export async function hashIP(ip: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(ip + process.env.SECURITY_SALT || '')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = new Uint8Array(hashBuffer)
+  return Array.from(hashArray, byte => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /**
@@ -81,7 +84,7 @@ export function getClientIP(request: NextRequest): string {
     return realIP
   }
 
-  return request.ip || '127.0.0.1'
+  return '127.0.0.1'
 }
 
 /**
@@ -148,22 +151,23 @@ export class BruteForceProtection {
  * Session management
  */
 export class SessionManager {
-  static create(userId: string, request: NextRequest): string {
+  static async create(userId: string, request: NextRequest): Promise<string> {
     const token = generateSessionToken()
     const now = Date.now()
 
+    const hashedIP = await hashIP(getClientIP(request))
     sessionStore.set(token, {
       userId,
       createdAt: now,
       lastActivity: now,
-      ipAddress: hashIP(getClientIP(request)),
+      ipAddress: hashedIP,
       userAgent: request.headers.get('user-agent') || ''
     })
 
     return token
   }
 
-  static validate(token: string, request: NextRequest): { valid: boolean; userId?: string } {
+  static async validate(token: string, request: NextRequest): Promise<{ valid: boolean; userId?: string }> {
     const session = sessionStore.get(token)
 
     if (!session) {
@@ -179,7 +183,7 @@ export class SessionManager {
     }
 
     // Validate IP address (optional strict check)
-    const currentIP = hashIP(getClientIP(request))
+    const currentIP = await hashIP(getClientIP(request))
     if (process.env.STRICT_IP_VALIDATION === 'true' && session.ipAddress !== currentIP) {
       sessionStore.delete(token)
       return { valid: false }
@@ -216,6 +220,8 @@ export const CSP_POLICY = {
     "'unsafe-eval'", // Required for Next.js development
     process.env.NODE_ENV === 'development' ? "'unsafe-inline'" : '',
     'https://challenges.cloudflare.com',
+    // GitHub Codespaces開発環境対応
+    process.env.NODE_ENV === 'development' ? 'https://*.app.github.dev' : '',
   ].filter(Boolean),
   'style-src': [
     "'self'",
@@ -237,6 +243,15 @@ export const CSP_POLICY = {
     'wss://*.supabase.co',
     process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     process.env.MONITORING_ENDPOINT || '',
+    // GitHub Codespaces開発環境対応 - より広範なパターン
+    process.env.NODE_ENV === 'development' ? 'https://*.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'wss://*.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'https://*-3000.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'wss://*-3000.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'https://*-*-*-3000.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'wss://*-*-*-3000.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'https://*-*-*-*-*-3000.app.github.dev' : '',
+    process.env.NODE_ENV === 'development' ? 'wss://*-*-*-*-*-3000.app.github.dev' : '',
   ].filter(Boolean),
   'media-src': [
     "'self'",
@@ -356,7 +371,7 @@ export class InputValidator {
 export class AuditLogger {
   static async logSecurityEvent(
     event: string,
-    details: Record<string, any>,
+    details: Record<string, unknown>,
     request: NextRequest,
     severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
   ): Promise<void> {
@@ -364,7 +379,7 @@ export class AuditLogger {
       timestamp: new Date().toISOString(),
       event,
       severity,
-      ip: hashIP(getClientIP(request)),
+      ip: await hashIP(getClientIP(request)),
       userAgent: request.headers.get('user-agent'),
       url: request.url,
       method: request.method,
@@ -390,7 +405,7 @@ export class AuditLogger {
     event: 'login' | 'logout' | 'failed_login' | 'password_change',
     userId: string | null,
     request: NextRequest,
-    details?: Record<string, any>
+    details?: Record<string, unknown>
   ): Promise<void> {
     await this.logSecurityEvent(`auth_${event}`, {
       userId,
@@ -406,7 +421,9 @@ export class CSRFProtection {
   private static tokens = new Map<string, { token: string; expires: number }>()
 
   static generateToken(sessionId: string): string {
-    const token = randomBytes(32).toString('hex')
+    const array = new Uint8Array(32)
+    crypto.getRandomValues(array)
+    const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
     const expires = Date.now() + (60 * 60 * 1000) // 1 hour
 
     this.tokens.set(sessionId, { token, expires })
@@ -444,7 +461,7 @@ if (typeof setInterval !== 'undefined') {
   }, 5 * 60 * 1000) // Every 5 minutes
 }
 
-export default {
+const securityMiddleware = {
   BruteForceProtection,
   SessionManager,
   InputValidator,
@@ -457,3 +474,5 @@ export default {
   SECURITY_CONFIG,
   CSP_POLICY
 }
+
+export default securityMiddleware

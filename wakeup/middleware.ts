@@ -104,7 +104,7 @@ export async function middleware(request: NextRequest) {
     setSecurityHeaders(response);
 
     const clientIP = getClientIP(request)
-    const hashedIP = hashIP(clientIP)
+    const hashedIP = await hashIP(clientIP)
 
     // Check brute force protection for auth endpoints
     if (pathname.startsWith('/api/auth/')) {
